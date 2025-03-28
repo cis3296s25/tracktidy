@@ -1,0 +1,4 @@
+rich>=10.0.0
+mutagen>=1.45.0
+spotipy>=2.19.0
+requests>=2.27.0
