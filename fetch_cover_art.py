@@ -9,8 +9,8 @@ from rich.prompt import Prompt
 console = Console()
 
 # ✅ Replace with your own Spotify API credentials
-SPOTIPY_CLIENT_ID = ""
-SPOTIPY_CLIENT_SECRET = ""
+SPOTIPY_CLIENT_ID = "f2292fcf102b48a29714a1ae913589e8"
+SPOTIPY_CLIENT_SECRET = "a492f50e54c8487a8ed5c872745d1486"
 
 # Initialize Spotify API client
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID,
