@@ -36,25 +36,29 @@ async def convert_audio():
     # Get file path
     while True:
         file_path = Prompt.ask("[#89dceb]Enter the path of the audio file to convert[/#89dceb]").strip()
+        if not file_path:
+            console.print("[bold #f38ba8]❌ Error: Path cannot be empty! Try again.[/bold #f38ba8]")
+            continue
         if not os.path.isfile(file_path):
             console.print("[bold #f38ba8]❌ Error: File not found! Try again.[/bold #f38ba8]")
             continue
         break
-
-    if not os.path.isfile(file_path):
-        console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] File not found!")
-        return
 
     file_path = os.path.abspath(file_path)
 
     # Get total duration
     total_duration = get_audio_duration(file_path)
     if total_duration is None:
-        console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Could not determine file duration!")
+        console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Could not determine file duration! This might not be a valid audio file or ffprobe isn't installed.")
+        Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
         return
 
     # Detect input file format
     file_extension = os.path.splitext(file_path)[1].lower().strip(".")
+    if not file_extension:
+        console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Could not determine file format!")
+        Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
+        return
     console.print(
             f"[#94e2d5]📂 Detected file format:[/#94e2d5] [bold #89b4fa]{file_extension.upper()}[/bold #89b4fa]")
 
@@ -104,13 +108,16 @@ async def convert_audio():
             console.print(
                 f"[bold #a6e3a1]✅ Conversion successful![/bold #a6e3a1] [#f9e2af]Saved as:[/#f9e2af] {output_file}")
         else:
-            console.print(f"[bold #f38ba8]❌ Error during conversion:[/bold #f38ba8] Check FFmpeg logs.")
+            console.print(f"[bold #f38ba8]❌ Error during conversion:[/bold #f38ba8] FFmpeg returned error code {process.returncode}.")
+            console.print("[#89dceb]This could be due to incompatible formats or codec issues.[/#89dceb]")
 
         # Pause before returning to the menu
         Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
 
     except Exception as e:
         console.print(f"[bold #f38ba8]❌ Error:[/bold #f38ba8] {e}")
+        console.print("[#89dceb]This might be because FFmpeg is not installed or accessible from the command line.[/#89dceb]")
+        Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
 
 if __name__ == "__main__":
     asyncio.run(convert_audio())
