@@ -2,7 +2,7 @@
 
 TrackTidy is an all-in-one music manager program made for DJs and music enthusiasts who want a lightweight yet powerful way to manage their audio files. The application features a styled command-line interface with robust functionality for managing your music collection.
 
-![TrackTidy Screenshot](images.png)
+![TrackTidy Screenshot](landing.png)
 
 ## Features
 
