@@ -2,7 +2,7 @@
 
 TrackTidy is an all-in-one music manager program made for DJs and music enthusiasts who want a lightweight yet powerful way to manage their audio files. The application features a styled command-line interface with robust functionality for managing your music collection.
 
-![TrackTidy Screenshot](landing.png)
+![TrackTidy Screenshot](images.png)
 
 ## Features
 
@@ -11,12 +11,12 @@ TrackTidy currently offers the following features:
 - **Metadata Editor**: Edit track metadata including title, artist, album, and genre
 - **Audio Conversion**: Convert audio files between different formats (mp3, wav, flac, aac, ogg)
 - **Cover Art Fetching**: Search and download album artwork from Spotify and embed it in your MP3 files
+- **Batch Processing**: Process multiple files at once for metadata editing and audio conversion
 
 ## Planned Features
 
 The following features are planned for future releases:
 
-- **Batch Processing**: Edit metadata or convert formats for multiple files at once
 - **Audio Editing**: Normalize audio, trim tracks, add fades
 - **Playlist Generator**: Export selected tracks to `.m3u` or `.pls` format
 - **Music Downloader**: Download music from various sources
@@ -84,6 +84,13 @@ python tracktidy.py
 4. Enter the path to the MP3 file
 5. Cover art will be downloaded and embedded in the file
 
+### Batch Processing
+
+1. Select option 4 from the main menu
+2. Choose between batch metadata editing or batch audio conversion
+3. Enter the directory containing the files to process
+4. Follow the prompts to apply changes to multiple files at once
+
 ## Getting Spotify API Credentials
 
 To use the Cover Art Fetcher feature, you'll need Spotify API credentials:
@@ -102,6 +109,7 @@ This project is structured as follows:
 - `metadata_editor.py` - Module for editing audio metadata
 - `audio_converter.py` - Module for converting audio formats
 - `fetch_cover_art.py` - Module for fetching and embedding cover art
+- `batch_processor.py` - Module for batch processing multiple files
 
 ## Contributing
 
