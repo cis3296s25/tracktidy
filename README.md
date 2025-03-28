@@ -1,20 +1,27 @@
-# Project Name
-Put here a short paragraph describing your project. 
-Adding an screenshot or a mockup of your application in action would be nice.  
+# 🎵 TrackTidy - All-in-One DJ Music Manager (POC)
+TrackTidy is a **command-line tool** for managing your music files. It allows you to:
+- ✅ **Edit metadata** (song title, artist, album, track number)
+- ✅ **Convert audio files** between formats (MP3, WAV, FLAC, AAC, OGG)
+- ✅ **Fetch and apply cover art**
+
+---
 
 ![This is a screenshot.](images.png)
 # How to run
-Provide here instructions on how to use your application.   
-- Download the latest binary from the Release section on the right on GitHub.  
-- On the command line uncompress using
+### 1️⃣ Install Dependencies
+Make sure you have **Python 3.10+** installed. Then install the required libraries:
+
+```sh
+pip install rich mutagen
 ```
-tar -xzf  
-```
-- On the command line run with
-```
-./hello
-```
-- You will see Hello World! on your terminal. 
+
+### 2️⃣ Install FFmpeg
+TrackTidy uses **FFmpeg** for audio conversion. Install it:
+
+- **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html) and add it to `PATH`.
+
+---
+
 
 # How to contribute
 Follow this project board to know the latest status of the project: [http://...]([http://...])  
@@ -22,8 +29,21 @@ Follow this project board to know the latest status of the project: [http://...]
 ### How to build
 - Use this github repository: https://github.com/cis3296s25/projects-03-tracktidy
 - Project board link: https://github.com/orgs/cis3296s25/projects/72
-- Specify what branch to use for a more stable release or for cutting edge development.  
-- Use InteliJ 11
-- Specify additional library to download if needed 
-- What file and target to compile and run. 
-- What is expected to happen when the app start. 
+### Convert an Audio File
+```sh
+python audio_converter.py
+```
+- Enter the path to your audio file.
+- Choose an output format (MP3, WAV, FLAC, AAC, OGG).
+- TrackTidy will display a **real-time progress bar** while converting.
+
+### Edit Metadata
+```sh
+python metadata_editor.py
+```
+- View existing metadata.
+- Edit **title, artist, album, track number** interactively.
+
+---
+
+
