@@ -5,6 +5,25 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.cache
+.pytest_cache/
 
 # Backup files
 *.bak
+
+# Build and distribution folders
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.env/
+
+# Logs
+*.log
+
+# Local configuration
+.env
+.env.local
