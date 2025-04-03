@@ -1,3 +1,6 @@
+"""
+Batch processing functionality for TrackTidy
+"""
 import os
 import asyncio
 import glob
@@ -7,8 +10,8 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
 
 # Import existing modules
-from metadata_editor import edit_metadata_file
-from audio_converter import convert_audio_file
+from tracktidy.core.metadata import edit_metadata_file
+from tracktidy.core.audio import convert_audio_file
 
 console = Console()
 

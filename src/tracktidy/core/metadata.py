@@ -1,3 +1,6 @@
+"""
+Metadata editing functionality for TrackTidy
+"""
 import os
 
 from mutagen import File
@@ -89,6 +92,7 @@ async def edit_metadata_file(file_path, metadata_updates=None, silent=False):
         return False
 
 async def edit_metadata():
+    """Interactive metadata editing UI"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy - Metadata Editor 🎵[/bold #f5e0dc]")
 
     # Ask for the file path

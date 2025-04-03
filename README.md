@@ -2,7 +2,7 @@
 
 TrackTidy is an all-in-one music manager program made for DJs and music enthusiasts who want a lightweight yet powerful way to manage their audio files. The application features a styled command-line interface with robust functionality for managing your music collection.
 
-![TrackTidy Screenshot](landing.png)
+![TrackTidy Screenshot](resources/images/landing.png)
 
 ## Features
 
@@ -39,20 +39,29 @@ TrackTidy depends on the following Python libraries:
 
 ## Installation
 
-1. Clone this repository:
+### Prerequisites
+
+TrackTidy requires:
+- Python 3.7 or higher
+- FFmpeg (for audio conversion)
+- Spotify API credentials (for cover art fetching)
+
+### Standard Installation
+
+1. Clone the repository:
    ```
    git clone https://github.com/yourusername/tracktidy.git
    cd tracktidy
    ```
 
-2. Install the required dependencies:
+2. Install the package and dependencies:
    ```
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
-3. Install FFmpeg (see FFmpeg Installation section below)
+   This will install TrackTidy in development mode with all required dependencies.
 
-## FFmpeg Installation
+### FFmpeg Installation
 
 TrackTidy requires FFmpeg for audio conversion features. You have several options:
 
@@ -67,11 +76,32 @@ TrackTidy requires FFmpeg for audio conversion features. You have several option
    - macOS: `brew install ffmpeg`
    - Linux: `sudo apt install ffmpeg` (or use your distro's package manager)
 
+### Spotify API Setup
+
+To use the Cover Art Fetcher feature, you'll need Spotify API credentials:
+
+1. Visit the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
+2. Log in with your Spotify account
+3. Create a new application
+4. Copy the Client ID and Client Secret
+5. Enter these credentials when prompted by TrackTidy
+
+The first time you use the Cover Art feature, TrackTidy will prompt you for these credentials.
+
 ## Usage
 
-Run the program with:
+### Running TrackTidy
+
+After installation, you can run TrackTidy with:
+
 ```
 python tracktidy.py
+```
+
+Or if you installed it with pip:
+
+```
+tracktidy
 ```
 
 ### Metadata Editor
@@ -80,13 +110,15 @@ python tracktidy.py
 2. Enter the path to the audio file
 3. View current metadata
 4. Enter new values or press Enter to keep current values
+5. Metadata will be updated and displayed
 
 ### Audio Converter
 
 1. Select option 2 from the main menu
 2. Enter the path to the audio file
-3. Choose the output format
+3. Choose the output format (mp3, wav, flac, aac, ogg)
 4. Wait for conversion to complete
+5. The converted file will be saved in the same directory
 
 ### Cover Art Fetcher
 
@@ -103,25 +135,38 @@ python tracktidy.py
 3. Enter the directory containing the files to process
 4. Follow the prompts to apply changes to multiple files at once
 
-## Getting Spotify API Credentials
+### Command Line Options
 
-To use the Cover Art Fetcher feature, you'll need Spotify API credentials:
+TrackTidy supports some command line options:
 
-1. Visit the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
-2. Log in with your Spotify account
-3. Create a new application
-4. Copy the Client ID and Client Secret
-5. Enter these credentials when prompted by TrackTidy
+```
+python tracktidy.py --download-ffmpeg
+```
 
-## Development
+This will download and install FFmpeg to the application directory, which is required for audio conversion features.
 
-This project is structured as follows:
+## Project Structure
 
-- `tracktidy.py` - Main application with menu system
-- `metadata_editor.py` - Module for editing audio metadata
-- `audio_converter.py` - Module for converting audio formats
-- `fetch_cover_art.py` - Module for fetching and embedding cover art
-- `batch_processor.py` - Module for batch processing multiple files
+```
+tracktidy/
+│
+├── src/                       # Source code directory
+│   └── tracktidy/             # Main package
+│       ├── core/              # Core functionality
+│       ├── services/          # External services
+│       ├── batch/             # Batch processing
+│       └── main.py            # Entry point
+│
+├── resources/                 # Static resources
+│   └── images/                # Images for documentation
+│
+├── .gitignore                 # Git ignore file
+├── LICENSE                    # License file
+├── README.md                  # Project README
+├── requirements.txt           # Project dependencies
+├── setup.py                   # Setup script for package installation
+└── tracktidy.py               # Launcher script
+```
 
 ## Contributing
 

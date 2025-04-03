@@ -1,3 +1,6 @@
+"""
+Audio conversion functionality for TrackTidy
+"""
 import asyncio
 import os
 import re
@@ -6,8 +9,8 @@ from rich.console import Console
 from rich.prompt import Prompt
 from rich.progress import Progress, BarColumn, TimeRemainingColumn
 
-# Import FFmpeg locator
-from ffmpeg_utils import find_ffmpeg_executable, find_ffprobe_executable, check_ffmpeg_installed
+# Import FFmpeg utilities
+from tracktidy.services.ffmpeg import find_ffmpeg_executable, find_ffprobe_executable, check_ffmpeg_installed
 
 console = Console(force_terminal=True, color_system="truecolor")
 
@@ -122,6 +125,7 @@ async def convert_audio_file(input_file, output_file, silent=False):
 
 
 async def convert_audio():
+    """Interactive audio conversion UI"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy Audio Converter 🎵[/bold #f5e0dc]\n")
 
     # Get file path
@@ -156,6 +160,3 @@ async def convert_audio():
 
     # Pause before returning to the menu
     Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
-
-if __name__ == "__main__":
-    asyncio.run(convert_audio())

@@ -1,3 +1,6 @@
+"""
+FFmpeg utilities for TrackTidy
+"""
 import os
 import platform
 import sys
@@ -307,13 +310,3 @@ def validate_installation():
         # FileNotFoundError: In case the executable isn't found (though we checked earlier)
         console.print(f"[#f38ba8]Error validating FFmpeg: {e}[/#f38ba8]")
         return False
-
-if __name__ == "__main__":
-    # This allows running this file directly to install FFmpeg
-    success = download_ffmpeg_to_app_dir()
-    if success:
-        # Validate installation
-        if validate_installation():
-            console.print("[bold #a6e3a1]✅ FFmpeg installation verified and working![/bold #a6e3a1]")
-        else:
-            console.print("[bold #f38ba8]⚠️ FFmpeg was installed but may not be working correctly.[/bold #f38ba8]")

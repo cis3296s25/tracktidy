@@ -27,3 +27,7 @@ env/
 # Local configuration
 .env
 .env.local
+
+# Project-specific
+old_files/
+.spotify_creds.json
