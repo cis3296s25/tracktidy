@@ -7,7 +7,7 @@ from rich.prompt import Prompt
 from rich.progress import Progress, BarColumn, TimeRemainingColumn
 
 # Import FFmpeg locator
-from ffmpeg_locator import find_ffmpeg_executable, find_ffprobe_executable, check_ffmpeg_installed
+from ffmpeg_utils import find_ffmpeg_executable, find_ffprobe_executable, check_ffmpeg_installed
 
 console = Console(force_terminal=True, color_system="truecolor")
 

@@ -23,8 +23,8 @@ def main():
     # Create additional files for the distribution
     create_readme()
     
-    print("\nNOTE: FFmpeg must be installed separately for audio conversion features to work.")
-    print("Download FFmpeg from https://ffmpeg.org/download.html and add it to your PATH.")
+    print("\nNOTE: FFmpeg must be installed for audio conversion features to work.")
+    print("Recommend users to run 'TrackTidy --download-ffmpeg' after installation.")
     
     print("\nBuild complete! You can find the executable in the 'dist/TrackTidy' folder.")
     
@@ -44,8 +44,9 @@ This program allows you to:
 - Process multiple files in batches
 
 IMPORTANT REQUIREMENTS:
-- FFmpeg must be installed separately and available in your system PATH
-  Download from: https://ffmpeg.org/download.html
+- FFmpeg must be installed for audio conversion features
+  Easy install: Run 'TrackTidy --download-ffmpeg'
+  OR install manually from: https://ffmpeg.org/download.html
 
 For Spotify artwork features:
 - You'll need to get your own Spotify API credentials from https://developer.spotify.com/dashboard

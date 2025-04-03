@@ -25,7 +25,7 @@ The following features are planned for future releases:
 ## Requirements
 
 - Python 3.7 or higher
-- FFmpeg (for audio conversion)
+- FFmpeg (for audio conversion - see installation options below)
 - Spotify API credentials (for cover art fetching)
 
 ## Dependencies
@@ -50,10 +50,22 @@ TrackTidy depends on the following Python libraries:
    pip install -r requirements.txt
    ```
 
-3. Install FFmpeg:
+3. Install FFmpeg (see FFmpeg Installation section below)
+
+## FFmpeg Installation
+
+TrackTidy requires FFmpeg for audio conversion features. You have several options:
+
+1. **Automatic Installation** (Recommended)
+   ```
+   python tracktidy.py --download-ffmpeg
+   ```
+   This will download and install FFmpeg directly to the TrackTidy application directory.
+
+2. **Manual System-wide Installation**
    - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
    - macOS: `brew install ffmpeg`
-   - Linux: `sudo apt install ffmpeg` or equivalent for your distribution
+   - Linux: `sudo apt install ffmpeg` (or use your distro's package manager)
 
 ## Usage
 

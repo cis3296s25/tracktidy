@@ -1,12 +1,14 @@
 import asyncio
+import argparse
+import sys
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.align import Align
 from rich.prompt import Prompt
 
-# Import FFmpeg checker
-from ffmpeg_locator import check_ffmpeg_installed
+# Import FFmpeg utilities
+from ffmpeg_utils import check_ffmpeg_installed, download_ffmpeg_to_app_dir
 
 # Importing modules
 from metadata_editor import edit_metadata
@@ -24,6 +26,13 @@ LOGO = Text("""
    ██║   ██║  ██║██║  ██║╚██████╗██║  ██╗   ██║   ██║██████╔╝   ██║   
    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝╚═════╝    ╚═╝   
 """, style="bold gradient(#f5e0dc,#89b4fa)")
+
+def parse_args():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description="TrackTidy - Music Manager for DJs and Music Enthusiasts")
+    parser.add_argument("--download-ffmpeg", action="store_true", 
+                      help="Download FFmpeg to the application directory")
+    return parser.parse_args()
 
 async def main_menu():
     # Check if FFmpeg is installed
@@ -67,4 +76,14 @@ async def main_menu():
             break
 
 if __name__ == "__main__":
+    args = parse_args()
+    
+    if args.download_ffmpeg:
+        # User requested to download FFmpeg
+        success = download_ffmpeg_to_app_dir()
+        if success:
+            print("\nYou can now run TrackTidy normally to use all features.")
+        sys.exit(0)
+    
+    # Normal program execution
     asyncio.run(main_menu())
