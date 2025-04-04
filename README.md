@@ -98,12 +98,6 @@ After installation, you can run TrackTidy with:
 python tracktidy.py
 ```
 
-Or if you installed it with pip:
-
-```
-tracktidy
-```
-
 ### Metadata Editor
 
 1. Select option 1 from the main menu
@@ -120,7 +114,7 @@ tracktidy
 4. Wait for conversion to complete
 5. The converted file will be saved in the same directory
 
-### Cover Art Fetcher
+### Cover Art Fetcher (MP3 Only)
 
 1. Select option 3 from the main menu
 2. Enter your Spotify API credentials if prompted (only required the first time)
@@ -135,14 +129,6 @@ tracktidy
 3. Enter the directory containing the files to process
 4. Follow the prompts to apply changes to multiple files at once
 
-### Command Line Options
-
-TrackTidy supports some command line options:
-
-```
-python tracktidy.py --download-ffmpeg
-```
-
 This will download and install FFmpeg to the application directory, which is required for audio conversion features.
 
 ## Project Structure
@@ -154,8 +140,9 @@ tracktidy/
 │   └── tracktidy/             # Main package
 │       ├── core/              # Core functionality
 │       ├── services/          # External services
-│       ├── batch/             # Batch processing
+│       ├── batch/             # Batch processing  
 │       └── main.py            # Entry point
+│   └── bin/                   # FFmpeg installation
 │
 ├── resources/                 # Static resources
 │   └── images/                # Images for documentation
