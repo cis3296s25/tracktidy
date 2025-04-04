@@ -25,65 +25,65 @@ The following features are planned for future releases:
 ## Requirements
 
 - Python 3.7 or higher
-- FFmpeg (for audio conversion - see installation options below)
+- FFmpeg (for audio conversion - will be automatically installed if needed)
 - Spotify API credentials (for cover art fetching)
 
-## Dependencies
-
-TrackTidy depends on the following Python libraries:
-
-- rich - For the styled command line interface
-- mutagen - For audio metadata manipulation
-- spotipy - For Spotify API access
-- requests - For HTTP requests
-
-## Installation
+## Getting Started
 
 ### Prerequisites
-
-TrackTidy requires:
 - Python 3.7 or higher
-- FFmpeg (for audio conversion)
-- Spotify API credentials (for cover art fetching)
+- pip (Python package manager)
 
-### Standard Installation
+### Installation
 
-1. Clone the repository:
+1. **Clone the repository**
    ```
    git clone https://github.com/yourusername/tracktidy.git
    cd tracktidy
    ```
 
-2. Install the package and dependencies:
+2. **Install Python dependencies**
+   ```
+   pip install -r requirements.txt
+   ```
+   
+   Alternatively, you can install the package in development mode:
    ```
    pip install -e .
    ```
 
-   This will install TrackTidy in development mode with all required dependencies.
+3. **Run TrackTidy**
+   ```
+   python tracktidy.py
+   ```
+
+4. **First Run Setup**
+   - When running for the first time, TrackTidy will prompt you to install FFmpeg if needed
+   - For cover art features, you'll be prompted to enter Spotify API credentials
+   - Follow the on-screen instructions to complete setup
 
 ### FFmpeg Installation
 
 TrackTidy requires FFmpeg for audio conversion features. You have several options:
 
 1. **Automatic Installation** (Recommended)
-   ```
-   python tracktidy.py --download-ffmpeg
-   ```
-   This will download and install FFmpeg directly to the TrackTidy application directory.
+   - TrackTidy will detect if FFmpeg is missing and offer to install it automatically
+   - Simply answer "y" when prompted during first run
+   - Alternatively, you can run: `python tracktidy.py --download-ffmpeg`
 
 2. **Manual System-wide Installation**
    - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
    - macOS: `brew install ffmpeg`
    - Linux: `sudo apt install ffmpeg` (or use your distro's package manager)
 
-### Spotify API Setup
+### Setting up Spotify API (for cover art features)
 
 To use the Cover Art Fetcher feature, you'll need Spotify API credentials:
 
 1. Visit the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/)
 2. Log in with your Spotify account
 3. Create a new application
-4. Copy the Client ID and Client Secret
+4. Note your Client ID and Client Secret
 5. Enter these credentials when prompted by TrackTidy
 
 The first time you use the Cover Art feature, TrackTidy will prompt you for these credentials.
@@ -129,7 +129,20 @@ python tracktidy.py
 3. Enter the directory containing the files to process
 4. Follow the prompts to apply changes to multiple files at once
 
-This will download and install FFmpeg to the application directory, which is required for audio conversion features.
+## Troubleshooting
+
+### FFmpeg Issues
+- If you encounter issues with audio conversion, try reinstalling FFmpeg with:
+  ```
+  python tracktidy.py --download-ffmpeg
+  ```
+- For Windows Explorer thumbnails not showing up after adding cover art, right-click the file and select Properties
+
+### Dependency Issues
+- If you get import errors, ensure all dependencies are installed:
+  ```
+  pip install -r requirements.txt
+  ```
 
 ## Project Structure
 
@@ -142,7 +155,6 @@ tracktidy/
 │       ├── services/          # External services
 │       ├── batch/             # Batch processing  
 │       └── main.py            # Entry point
-│   └── bin/                   # FFmpeg installation
 │
 ├── resources/                 # Static resources
 │   └── images/                # Images for documentation
