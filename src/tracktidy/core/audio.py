@@ -164,6 +164,9 @@ async def convert_audio():
             console.print("[bold #f38ba8]❌ Error: File not found! Try again.[/bold #f38ba8]")
             continue
         break
+        
+    # Display the selected file with its full path for clarity
+    console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")
 
     # Choose the output format
     valid_formats = ["mp3", "wav", "flac", "aac", "ogg"]
@@ -176,11 +179,12 @@ async def convert_audio():
 
     output_file = os.path.splitext(file_path)[0] + f".{output_format}"
     
-    console.print(f"[#eba0ac]🔄 Converting {file_path} to {output_format}...[/#eba0ac]")
+    console.print(f"[#eba0ac]🔄 Converting {os.path.basename(file_path)} to {output_format}...[/#eba0ac]")
     
     # Use the helper function for conversion
     if await convert_audio_file(file_path, output_file):
-        console.print(f"[bold #a6e3a1]✅ Conversion successful![/bold #a6e3a1] [#f9e2af]Saved as:[/#f9e2af] {output_file}")
+        console.print(f"[bold #a6e3a1]✅ Conversion successful![/bold #a6e3a1]")
+        console.print(f"[#f9e2af]Saved as:[/#f9e2af] {output_file}")
     else:
         console.print(f"[bold #f38ba8]❌ Error during conversion![/bold #f38ba8]")
 

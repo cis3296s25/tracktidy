@@ -92,8 +92,8 @@ def main():
         console.print("[bold #89b4fa]Starting FFmpeg download and installation...[/bold #89b4fa]")
         success = download_ffmpeg_to_app_dir()
         if success:
-            console.print("\n[bold #a6e3a1]\u2705 FFmpeg installation successful![/bold #a6e3a1]")
-            console.print("[#89dceb]You can now run TrackTidy normally to use all features.[/#89dceb]")
+            # Don't print redundant success message, it's already shown in download_ffmpeg_to_app_dir
+            console.print("\n[#89dceb]You can now run TrackTidy normally to use all features.[/#89dceb]")
         else:
             console.print("\n[bold #f38ba8]\u274c FFmpeg installation failed.[/bold #f38ba8]")
             console.print("[#89dceb]Please try again or install manually.[/#89dceb]")

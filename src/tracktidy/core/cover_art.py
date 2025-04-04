@@ -99,6 +99,9 @@ async def fetch_cover_art():
             console.print("[bold #f38ba8]❌ Error: File must be an MP3 file![/bold #f38ba8]")
             continue
         break
+    
+    # Display the selected file with its full path for clarity
+    console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")
 
     # Download the cover image
     image_data = download_cover_art(cover_url)

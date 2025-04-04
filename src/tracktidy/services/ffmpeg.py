@@ -389,7 +389,7 @@ def prompt_and_install_ffmpeg():
             ffprobe_ok = run_ffmpeg_command(ffprobe_path, ["-version"])
             
             if ffmpeg_ok and ffprobe_ok:
-                console.print("[bold #a6e3a1]✅ FFmpeg installation successful![/bold #a6e3a1]")
+                # No need for another success message - already shown in download_ffmpeg_to_app_dir
                 return True
             else:
                 console.print("[bold #f38ba8]⚠️ FFmpeg was installed but validation failed.[/bold #f38ba8]")
