@@ -38,18 +38,13 @@ The following features are planned for future releases:
 
 1. **Clone the repository**
    ```
-   git clone https://github.com/yourusername/tracktidy.git
+   git clone https://github.com/cis3296s25/tracktidy
    cd tracktidy
    ```
 
 2. **Install Python dependencies**
    ```
    pip install -r requirements.txt
-   ```
-   
-   Alternatively, you can install the package in development mode:
-   ```
-   pip install -e .
    ```
 
 3. **Run TrackTidy**
@@ -136,7 +131,6 @@ python tracktidy.py
   ```
   python tracktidy.py --download-ffmpeg
   ```
-- For Windows Explorer thumbnails not showing up after adding cover art, right-click the file and select Properties
 
 ### Dependency Issues
 - If you get import errors, ensure all dependencies are installed:
