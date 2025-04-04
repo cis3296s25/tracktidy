@@ -16,6 +16,10 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console()
 
+# Global variables to cache FFmpeg paths after installation
+_cached_ffmpeg_path = None
+_cached_ffprobe_path = None
+
 def get_app_directory():
     """Get the application directory path
     
@@ -27,7 +31,10 @@ def get_app_directory():
         return os.path.dirname(sys.executable)
     else:
         # Running in development mode
-        return os.path.dirname(os.path.abspath(__file__))
+        # Navigate up to the main project directory from services
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Go up twice: from services to tracktidy to src
+        return os.path.dirname(os.path.dirname(current_dir))
 
 def find_executable(name):
     """Find the path to a specified executable (ffmpeg or ffprobe)
@@ -38,6 +45,14 @@ def find_executable(name):
     Returns:
         str or None: Path to the executable, or None if not found
     """
+    global _cached_ffmpeg_path, _cached_ffprobe_path
+    
+    # First check our cached paths from a successful installation
+    if name == 'ffmpeg' and _cached_ffmpeg_path and os.path.exists(_cached_ffmpeg_path):
+        return _cached_ffmpeg_path
+    elif name == 'ffprobe' and _cached_ffprobe_path and os.path.exists(_cached_ffprobe_path):
+        return _cached_ffprobe_path
+    
     if name not in ['ffmpeg', 'ffprobe']:
         raise ValueError("Name must be either 'ffmpeg' or 'ffprobe'")
         
@@ -95,6 +110,55 @@ def find_ffprobe_executable():
     """Find the FFprobe executable path"""
     return find_executable('ffprobe')
 
+def print_manual_install_instructions(platform_specific=False):
+    """Print instructions for manual FFmpeg installation
+    
+    Args:
+        platform_specific (bool): Whether to show platform-specific instructions
+    """
+    console.print("\n[#89dceb]Please install FFmpeg manually:[/#89dceb]")
+    
+    if platform_specific:
+        console.print("- Windows: Download from https://ffmpeg.org/download.html")
+        console.print("- macOS: Run 'brew install ffmpeg'")
+        console.print("- Linux: Run 'sudo apt install ffmpeg' or use your package manager")
+    else:
+        console.print("- Download from https://ffmpeg.org/download.html")
+        console.print("- Or run this program again and choose to install automatically")
+
+def run_ffmpeg_command(executable_path, args, check_stdout=False):
+    """Run an FFmpeg command and capture output
+    
+    Args:
+        executable_path (str): Path to ffmpeg or ffprobe executable
+        args (list): Command arguments
+        check_stdout (bool): Whether to capture and return stdout
+        
+    Returns:
+        bool: True if command succeeded
+        str (optional): stdout if check_stdout is True
+    """
+    try:
+        if check_stdout:
+            result = subprocess.run(
+                [executable_path] + args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            return result.returncode == 0, result.stdout
+        else:
+            result = subprocess.run(
+                [executable_path] + args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            return result.returncode == 0
+    except (subprocess.SubprocessError, OSError, FileNotFoundError) as e:
+        console.print(f"[#f38ba8]Error executing FFmpeg command: {e}[/#f38ba8]")
+        return False
+
 def check_ffmpeg_installed():
     """Check if FFmpeg is installed and available
     
@@ -107,23 +171,13 @@ def check_ffmpeg_installed():
     if ffmpeg_path and ffprobe_path:
         try:
             # Test FFmpeg
-            result = subprocess.run(
-                [ffmpeg_path, "-version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            if result.returncode != 0:
+            ffmpeg_ok = run_ffmpeg_command(ffmpeg_path, ["-version"])
+            if not ffmpeg_ok:
                 return False, "FFmpeg is installed but not working properly"
                 
             # Test FFprobe
-            result = subprocess.run(
-                [ffprobe_path, "-version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            if result.returncode != 0:
+            ffprobe_ok = run_ffmpeg_command(ffprobe_path, ["-version"])
+            if not ffprobe_ok:
                 return False, "FFprobe is installed but not working properly"
                 
             return True, "FFmpeg and FFprobe are available"
@@ -199,9 +253,7 @@ def download_ffmpeg_to_app_dir():
     # Only support Windows for now
     if system != "Windows":
         console.print("[bold #f38ba8]❌ Currently only Windows is supported for automatic FFmpeg installation.[/bold #f38ba8]")
-        console.print("[#89dceb]Please install FFmpeg manually:[/#89dceb]")
-        console.print("- macOS: Run 'brew install ffmpeg'")
-        console.print("- Linux: Run 'sudo apt install ffmpeg' or use your package manager")
+        print_manual_install_instructions(platform_specific=True)
         return False
     
     arch = platform.machine().lower()
@@ -216,7 +268,7 @@ def download_ffmpeg_to_app_dir():
     
     try:
         # For Windows - smaller essential build
-        url = "https://github.com/GyanD/codexffmpeg/releases/download/2025-03-31-git-35c091f4b7/ffmpeg-2025-03-31-git-35c091f4b7-essentials_build.zip"
+        url = "https://github.com/GyanD/codexffmpeg/releases/download/6.1.1/ffmpeg-6.1.1-essentials_build.zip"
         
         with Progress(
             SpinnerColumn(),
@@ -263,10 +315,7 @@ def download_ffmpeg_to_app_dir():
         
     except Exception as e:
         console.print(f"\n[bold #f38ba8]❌ Error downloading FFmpeg: {e}[/bold #f38ba8]")
-        console.print("\n[#89dceb]Please install FFmpeg manually:[/#89dceb]")
-        console.print("- Windows: Download from https://ffmpeg.org/download.html")
-        console.print("- macOS: Run 'brew install ffmpeg'")
-        console.print("- Linux: Run 'sudo apt install ffmpeg' or use your package manager")
+        print_manual_install_instructions(platform_specific=True)
         return False
 
 def validate_installation():
@@ -280,33 +329,84 @@ def validate_installation():
     
     if not ffmpeg_path or not ffprobe_path:
         return False
-        
+    
     # Verify executables work
-    try:
-        # Test FFmpeg
-        result = subprocess.run(
-            [ffmpeg_path, "-version"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        if result.returncode != 0:
-            return False
-            
-        # Test FFprobe
-        result = subprocess.run(
-            [ffprobe_path, "-version"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        if result.returncode != 0:
-            return False
-            
-        return True
-    except (subprocess.SubprocessError, OSError, FileNotFoundError) as e:
-        # SubprocessError: Base class for subprocess exceptions
-        # OSError: Covers issues like permission errors
-        # FileNotFoundError: In case the executable isn't found (though we checked earlier)
-        console.print(f"[#f38ba8]Error validating FFmpeg: {e}[/#f38ba8]")
+    ffmpeg_ok = run_ffmpeg_command(ffmpeg_path, ["-version"])
+    if not ffmpeg_ok:
         return False
+        
+    ffprobe_ok = run_ffmpeg_command(ffprobe_path, ["-version"])
+    if not ffprobe_ok:
+        return False
+        
+    return True
+
+def prompt_and_install_ffmpeg():
+    """Check for FFmpeg and install if needed
+    
+    Returns:
+        bool: True if FFmpeg is available (installed or successfully downloaded)
+    """
+    global _cached_ffmpeg_path, _cached_ffprobe_path
+    
+    # Check if FFmpeg is already installed
+    is_installed, message = check_ffmpeg_installed()
+    if is_installed:
+        return True
+    
+    # If FFmpeg not found, prompt user
+    console.print("\n[bold #f38ba8]FFmpeg is required but not found on your system.[/bold #f38ba8]")
+    console.print(f"[#89dceb]{message}[/#89dceb]")
+    
+    install_choice = input("\nWould you like to install FFmpeg now? (y/n): ")
+    if install_choice.lower() not in ['y', 'yes']:
+        print_manual_install_instructions()
+        return False
+    
+    # User chose to install
+    console.print("\n[#89b4fa]Installing FFmpeg...[/#89b4fa]")
+    success = download_ffmpeg_to_app_dir()
+    
+    if success:
+        # Force a refresh of any internal caches
+        # Some systems need time to recognize new executables
+        time.sleep(0.5)  # Short delay to ensure file system sync
+        
+        # Get direct paths to the executables we just installed
+        app_dir = get_app_directory()
+        bin_dir = os.path.join(app_dir, "bin")
+        
+        ffmpeg_path = os.path.join(bin_dir, "ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg")
+        ffprobe_path = os.path.join(bin_dir, "ffprobe.exe" if platform.system() == "Windows" else "ffprobe")
+        
+        if os.path.exists(ffmpeg_path) and os.path.exists(ffprobe_path):
+            # Cache these paths for immediate use
+            _cached_ffmpeg_path = ffmpeg_path
+            _cached_ffprobe_path = ffprobe_path
+            
+            # Test the binaries directly
+            ffmpeg_ok = run_ffmpeg_command(ffmpeg_path, ["-version"])
+            ffprobe_ok = run_ffmpeg_command(ffprobe_path, ["-version"])
+            
+            if ffmpeg_ok and ffprobe_ok:
+                console.print("[bold #a6e3a1]✅ FFmpeg installation successful![/bold #a6e3a1]")
+                return True
+            else:
+                console.print("[bold #f38ba8]⚠️ FFmpeg was installed but validation failed.[/bold #f38ba8]")
+                console.print("[#89dceb]Try restarting the application if FFmpeg features don't work.[/#89dceb]")
+                return True  # Still return True to let the user try using it
+        else:
+            console.print("[bold #f38ba8]⚠️ FFmpeg installation may be incomplete.[/bold #f38ba8]")
+    else:
+        console.print("[bold #f38ba8]❌ FFmpeg installation failed.[/bold #f38ba8]")
+    
+    print_manual_install_instructions()
+    return False
+
+if __name__ == "__main__":
+    # This allows running this file directly to test FFmpeg installation
+    success = prompt_and_install_ffmpeg()
+    if success:
+        console.print("\n[bold #a6e3a1]FFmpeg is ready to use with TrackTidy![/bold #a6e3a1]")
+    else:
+        console.print("\n[bold #f38ba8]Some features requiring FFmpeg will not be available.[/bold #f38ba8]")

@@ -108,18 +108,46 @@ async def fetch_cover_art():
 
     # Embed cover art into the MP3 file
     try:
+        # First clear existing ID3 tags if they exist
+        try:
+            id3 = ID3(file_path)
+            # Only remove the APIC frames (cover art)
+            for key in list(id3.keys()):
+                if key.startswith('APIC'):
+                    del id3[key]
+            id3.save(file_path)
+        except:
+            pass  # No existing tags
+            
+        # Add the new cover art
         audio = MP3(file_path, ID3=ID3)
+        
+        # Ensure ID3v2 tags exist
+        if audio.tags is None:
+            audio.add_tags()
+            
+        # Add cover art with appropriate MIME type
+        # Try to determine MIME type from the first bytes
+        mime_type = "image/jpeg"  # Default
+        if image_data[:2] == b'\xff\xd8':
+            mime_type = "image/jpeg"
+        elif image_data[:8] == b'\x89PNG\r\n\x1a\n':
+            mime_type = "image/png"
+            
         audio.tags.add(
             APIC(
                 encoding=3,         # UTF-8
-                mime="image/jpeg",  # Image MIME type
+                mime=mime_type,     # Image MIME type based on content
                 type=3,             # Front cover image
                 desc="Cover",
                 data=image_data
             )
         )
-        audio.save()
+        audio.save(v2_version=3)  # Explicitly use ID3v2.3
+        
         console.print(f"[bold #a6e3a1]✅ Cover art added successfully![/bold #a6e3a1]")
+        console.print("[#89dceb]Note: It may take a moment for Windows Explorer to show the thumbnail.[/#89dceb]")
+        console.print("[#89dceb]If it doesn't appear, try right-clicking and selecting 'Properties' to refresh.[/#89dceb]")
 
         # Pause before returning to the menu
         Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")

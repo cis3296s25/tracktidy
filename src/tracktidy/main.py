@@ -11,7 +11,7 @@ from rich.align import Align
 from rich.prompt import Prompt
 
 # Import services
-from tracktidy.services.ffmpeg import check_ffmpeg_installed, download_ffmpeg_to_app_dir
+from tracktidy.services.ffmpeg import check_ffmpeg_installed, download_ffmpeg_to_app_dir, prompt_and_install_ffmpeg, validate_installation
 
 # Import core modules
 from tracktidy.core.metadata import edit_metadata
@@ -34,19 +34,23 @@ def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description="TrackTidy - Music Manager for DJs and Music Enthusiasts")
     parser.add_argument("--download-ffmpeg", action="store_true", 
-                      help="Download FFmpeg to the application directory")
+                      help="Download and install FFmpeg automatically (required for audio conversion)")
     return parser.parse_args()
 
 async def main_menu():
     """Display and handle the main menu"""
-    # Check if FFmpeg is installed
-    ffmpeg_available, ffmpeg_message = check_ffmpeg_installed()
+    # Check if FFmpeg is installed and prompt to install if needed
+    ffmpeg_available = prompt_and_install_ffmpeg()
     if not ffmpeg_available:
-        console.print(f"[bold #f38ba8]❌ Warning: {ffmpeg_message}[/bold #f38ba8]")
-        console.print("[#89dceb]Audio conversion features will not work without FFmpeg.[/#89dceb]")
-        console.print("[#89dceb]Please install FFmpeg from https://ffmpeg.org/download.html[/#89dceb]")
-        console.print("\n[#89dceb]Press Enter to continue anyway...[/#89dceb]")
+        console.print("\n[#89dceb]Audio conversion and some other features will be unavailable without FFmpeg.[/#89dceb]")
+        console.print("[#89dceb]Press Enter to continue with limited functionality...[/#89dceb]")
         input()
+    elif not validate_installation():  # Double-check installation actually works
+        console.print("\n[bold #f38ba8]FFmpeg was installed but may not be working correctly.[/bold #f38ba8]")
+        console.print("\n[#89dceb]Please restart the application to use FFmpeg features.[/#89dceb]")
+        console.print("[#89dceb]Press Enter to continue with limited functionality...[/#89dceb]")
+        input()
+        ffmpeg_available = False
         
     while True:
         # Print the ASCII Logo
@@ -85,10 +89,15 @@ def main():
     
     if args.download_ffmpeg:
         # User requested to download FFmpeg
+        console.print("[bold #89b4fa]Starting FFmpeg download and installation...[/bold #89b4fa]")
         success = download_ffmpeg_to_app_dir()
         if success:
-            print("\nYou can now run TrackTidy normally to use all features.")
-        sys.exit(0)
+            console.print("\n[bold #a6e3a1]\u2705 FFmpeg installation successful![/bold #a6e3a1]")
+            console.print("[#89dceb]You can now run TrackTidy normally to use all features.[/#89dceb]")
+        else:
+            console.print("\n[bold #f38ba8]\u274c FFmpeg installation failed.[/bold #f38ba8]")
+            console.print("[#89dceb]Please try again or install manually.[/#89dceb]")
+        sys.exit(0 if success else 1)
     
     # Normal program execution
     asyncio.run(main_menu())

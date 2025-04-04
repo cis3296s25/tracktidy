@@ -5,33 +5,60 @@ import asyncio
 import os
 import re
 import subprocess
+import platform
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.progress import Progress, BarColumn, TimeRemainingColumn
 
 # Import FFmpeg utilities
-from tracktidy.services.ffmpeg import find_ffmpeg_executable, find_ffprobe_executable, check_ffmpeg_installed
+from tracktidy.services.ffmpeg import find_ffmpeg_executable, find_ffprobe_executable, check_ffmpeg_installed, get_app_directory
 
 console = Console(force_terminal=True, color_system="truecolor")
 
-# Get FFmpeg and FFprobe paths
-FFMPEG_PATH = find_ffmpeg_executable()
-FFPROBE_PATH = find_ffprobe_executable()
+# Get FFmpeg and FFprobe paths dynamically for each operation
+def get_ffmpeg_paths():
+    """Get current FFmpeg and FFprobe paths, or use installed binaries directly"""
+    # First try the normal way
+    ffmpeg = find_ffmpeg_executable()
+    ffprobe = find_ffprobe_executable()
+    
+    # If not found, try direct paths to installed binaries
+    if not ffmpeg or not ffprobe:
+        app_dir = get_app_directory()
+        bin_dir = os.path.join(app_dir, "bin")
+        
+        exe_ext = ".exe" if platform.system() == "Windows" else ""
+        
+        # Check direct paths to installed binaries
+        ffmpeg_direct = os.path.join(bin_dir, f"ffmpeg{exe_ext}")
+        ffprobe_direct = os.path.join(bin_dir, f"ffprobe{exe_ext}")
+        
+        if os.path.exists(ffmpeg_direct) and not ffmpeg:
+            ffmpeg = ffmpeg_direct
+        
+        if os.path.exists(ffprobe_direct) and not ffprobe:
+            ffprobe = ffprobe_direct
+    
+    return ffmpeg, ffprobe
 
 # Extract total duration (ffprobe)
 def get_audio_duration(file_path):
     try:
-        if not FFPROBE_PATH:
+        # Get current path
+        _, ffprobe_path = get_ffmpeg_paths()
+        
+        if not ffprobe_path:
             return None
             
         result = subprocess.run(
-            [FFPROBE_PATH, "-v", "quiet", "-show_entries", "format=duration", "-of", "csv=p=0", file_path],
+            [ffprobe_path, "-v", "quiet", "-show_entries", "format=duration", "-of", "csv=p=0", file_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
         return float(result.stdout.strip())
-    except Exception:
+    except Exception as e:
+        console.print(f"[bold #f38ba8]Error getting duration: {e}[/bold #f38ba8]")
         return None
 
 # Extract elapsed time (FFmpeg)
@@ -63,28 +90,27 @@ async def convert_audio_file(input_file, output_file, silent=False):
             return False
 
         try:
+            # Get current FFmpeg path
+            ffmpeg_path, _ = get_ffmpeg_paths()
+            
+            if not ffmpeg_path:
+                if not silent:
+                    console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] FFmpeg not found or not properly installed.")
+                    console.print("[#89dceb]Please install FFmpeg and make sure it's in your PATH.[/#89dceb]")
+                return False
+            
             if silent:
                 # Use simple subprocess for silent mode
-                if not FFMPEG_PATH:
-                    if not silent:
-                        console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] FFmpeg not found or not properly installed.")
-                    return False
-                    
                 process = subprocess.run(
-                    [FFMPEG_PATH, "-y", "-i", input_file, output_file],
+                    [ffmpeg_path, "-y", "-i", input_file, output_file],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
                 )
                 return process.returncode == 0
             else:
                 # Use asyncio with progress bar for interactive mode
-                if not FFMPEG_PATH:
-                    console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] FFmpeg not found or not properly installed.")
-                    console.print("[#89dceb]Please install FFmpeg and make sure it's in your PATH.[/#89dceb]")
-                    return False
-                    
                 process = await asyncio.create_subprocess_exec(
-                    FFMPEG_PATH, "-y", "-i", input_file, output_file,
+                    ffmpeg_path, "-y", "-i", input_file, output_file,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
