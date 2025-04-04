@@ -1,3 +1,7 @@
+# FFmpeg binaries
+bin/
+*.exe
+
 # PyCharm files
 .idea/
 
