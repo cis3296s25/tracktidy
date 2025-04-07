@@ -11,13 +11,13 @@ from rich.align import Align
 from rich.prompt import Prompt
 
 # Import services
-from tracktidy.services.ffmpeg import check_ffmpeg_installed, download_ffmpeg_to_app_dir, prompt_and_install_ffmpeg, validate_installation
+from src.tracktidy.services.ffmpeg import download_ffmpeg_to_app_dir, prompt_and_install_ffmpeg
 
 # Import core modules
-from tracktidy.core.metadata import edit_metadata
-from tracktidy.core.audio import convert_audio
-from tracktidy.core.cover_art import fetch_cover_art
-from tracktidy.batch.processor import batch_process
+from src.tracktidy.core.metadata import edit_metadata
+from src.tracktidy.core.audio import convert_audio
+from src.tracktidy.core.cover_art import fetch_cover_art
+from src.tracktidy.batch.processor import batch_process
 
 console = Console(force_terminal=True, color_system="truecolor")
 
@@ -45,12 +45,6 @@ async def main_menu():
         console.print("\n[#89dceb]Audio conversion and some other features will be unavailable without FFmpeg.[/#89dceb]")
         console.print("[#89dceb]Press Enter to continue with limited functionality...[/#89dceb]")
         input()
-    elif not validate_installation():  # Double-check installation actually works
-        console.print("\n[bold #f38ba8]FFmpeg was installed but may not be working correctly.[/bold #f38ba8]")
-        console.print("\n[#89dceb]Please restart the application to use FFmpeg features.[/#89dceb]")
-        console.print("[#89dceb]Press Enter to continue with limited functionality...[/#89dceb]")
-        input()
-        ffmpeg_available = False
         
     while True:
         # Print the ASCII Logo
@@ -67,9 +61,10 @@ async def main_menu():
         console.print("[#b4befe]2.[/#b4befe][bold]Convert Audio File[/bold]")
         console.print("[#f5c2e7]3.[/#f5c2e7][bold]Fetch Cover Art[/bold]")
         console.print("[#fab387]4.[/#fab387][bold]Batch Processing[/bold]")
-        console.print("[#f38ba8]5.[/#f38ba8][bold]Exit[/bold]")
+        console.print("[#94e2d5]5.[/#94e2d5][bold]Music Downloader[/bold]")
+        console.print("[#f38ba8]6.[/#f38ba8][bold]Exit[/bold]")
 
-        choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3", "4", "5"])
+        choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3", "4", "5", "6"])
 
         if choice == "1":
             await edit_metadata()
@@ -80,6 +75,10 @@ async def main_menu():
         elif choice == "4":
             await batch_process()
         elif choice == "5":
+            # Music downloader option
+            from src.tracktidy.ui.downloader_ui import download_ui
+            await download_ui()
+        elif choice == "6":
             console.print("[#a6e3a1]❌ Exiting TrackTidy. Goodbye![/#a6e3a1]")
             break
 
@@ -92,10 +91,10 @@ def main():
         console.print("[bold #89b4fa]Starting FFmpeg download and installation...[/bold #89b4fa]")
         success = download_ffmpeg_to_app_dir()
         if success:
-            # Don't print redundant success message, it's already shown in download_ffmpeg_to_app_dir
-            console.print("\n[#89dceb]You can now run TrackTidy normally to use all features.[/#89dceb]")
+            console.print("\n[bold #a6e3a1]✅ FFmpeg installation successful![/bold #a6e3a1]")
+            console.print("[#89dceb]You can now run TrackTidy normally to use all features.[/#89dceb]")
         else:
-            console.print("\n[bold #f38ba8]\u274c FFmpeg installation failed.[/bold #f38ba8]")
+            console.print("\n[bold #f38ba8]❌ FFmpeg installation failed.[/bold #f38ba8]")
             console.print("[#89dceb]Please try again or install manually.[/#89dceb]")
         sys.exit(0 if success else 1)
     
