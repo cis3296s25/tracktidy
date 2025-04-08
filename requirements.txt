@@ -3,5 +3,6 @@ mutagen>=1.45.0
 spotipy>=2.19.0
 requests>=2.27.0
 yt-dlp>=2024.7.7
+ytmusicapi>=1.0.0
 tidalapi>=0.7.1
 aiohttp>=3.8.4

@@ -209,8 +209,14 @@ class SpotifyYouTubeProvider(BaseProvider):
     async def search(self, query: str, type: str = "track", limit: int = 10) -> List[Dict[str, Any]]:
         """Search for music content on Spotify"""
         try:
+            # Validate inputs
+            if not query.strip():
+                logger.error("Empty search query provided")
+                return []
+                
             if type not in ["track", "album", "playlist", "artist"]:
-                raise ValueError(f"Invalid search type: {type}")
+                logger.error(f"Invalid search type: {type}")
+                return []
             
             # Sanitize the query to avoid special character issues
             query = query.strip()
@@ -405,10 +411,11 @@ class SpotifyYouTubeProvider(BaseProvider):
             if progress_callback:
                 progress_callback('search', 0.1, f"Searching for: {track.title}")
             
-            # Search for the track on YouTube
+            # Search for the track on YouTube with artist information
             youtube_url = await self.youtube.search_best_match(
                 search_query,
-                duration=track.duration
+                duration=track.duration,
+                artists=track.artist.split(', ')
             )
             
             if not youtube_url:
@@ -417,6 +424,8 @@ class SpotifyYouTubeProvider(BaseProvider):
                     progress_callback('error', 0, f"No match found for: {track.title}")
                 raise Exception(f"Could not find YouTube match for: {track.title} by {track.artist}")
             
+            # Update the track with the YouTube URL for reference
+            track.youtube_url = youtube_url
             logger.info(f"Found YouTube match: {youtube_url}")
             if progress_callback:
                 progress_callback('found', 0.2, f"Found match for: {track.title}")

@@ -84,6 +84,16 @@ def embed_mp3_metadata(file_path: str, track: Track) -> bool:
         # Add lyrics (if available)
         if hasattr(track, 'lyrics') and track.lyrics:
             audio['USLT'] = USLT(encoding=3, lang='eng', desc='', text=track.lyrics)
+            
+        # Add YouTube source URL as comment (if available)
+        if hasattr(track, 'youtube_url') and track.youtube_url:
+            from mutagen.id3 import COMM
+            audio['COMM'] = COMM(
+                encoding=3,
+                lang='eng',
+                desc='YouTube Source',
+                text=track.youtube_url
+            )
         
         # Add album art if available
         if track.cover_url:

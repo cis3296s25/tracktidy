@@ -19,6 +19,7 @@ class Track:
     isrc: Optional[str] = None
     quality: Optional[str] = None
     explicit: Optional[bool] = None
+    youtube_url: Optional[str] = None
 
 
 @dataclass

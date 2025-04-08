@@ -174,16 +174,24 @@ class MusicDownloader:
         
         # Download each track in the album
         filepaths = []
+        total_tracks = len(album.tracks)
+        successful_downloads = 0
+        
         for i, track in enumerate(album.tracks):
             if progress_callback:
-                progress_callback(i, len(album.tracks), f"{track.artist} - {track.title}")
+                progress_callback(i, total_tracks, f"{track.artist} - {track.title}")
                 
-            filepath = await self.current_provider.download_track(track, album_dir, quality)
-            if filepath:
-                filepaths.append(filepath)
+            try:
+                filepath = await self.current_provider.download_track(track, album_dir, quality)
+                if filepath:
+                    filepaths.append(filepath)
+                    successful_downloads += 1
+            except Exception as e:
+                logger.error(f"Error downloading track {track.title}: {e}")
+                # Continue with next track instead of failing completely
                 
         if progress_callback:
-            progress_callback(len(album.tracks), len(album.tracks), "Completed")
+            progress_callback(total_tracks, total_tracks, f"Completed - Downloaded {successful_downloads}/{total_tracks} tracks")
         
         return filepaths
         
@@ -211,16 +219,24 @@ class MusicDownloader:
         
         # Download each track in the playlist
         filepaths = []
+        total_tracks = len(playlist.tracks)
+        successful_downloads = 0
+        
         for i, track in enumerate(playlist.tracks):
             if progress_callback:
-                progress_callback(i, len(playlist.tracks), f"{track.artist} - {track.title}")
+                progress_callback(i, total_tracks, f"{track.artist} - {track.title}")
                 
-            filepath = await self.current_provider.download_track(track, playlist_dir, quality)
-            if filepath:
-                filepaths.append(filepath)
+            try:
+                filepath = await self.current_provider.download_track(track, playlist_dir, quality)
+                if filepath:
+                    filepaths.append(filepath)
+                    successful_downloads += 1
+            except Exception as e:
+                logger.error(f"Error downloading track {track.title}: {e}")
+                # Continue with next track instead of failing completely
                 
         if progress_callback:
-            progress_callback(len(playlist.tracks), len(playlist.tracks), "Completed")
+            progress_callback(total_tracks, total_tracks, f"Completed - Downloaded {successful_downloads}/{total_tracks} tracks")
         
         return filepaths
         
