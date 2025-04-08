@@ -2,14 +2,12 @@
 Music download functionality for TrackTidy
 """
 import os
-import asyncio
 import logging
 import re
-from typing import List, Optional, Dict, Any, Tuple, Union
-from pathlib import Path
+from typing import List, Dict, Any
 from urllib.parse import urlparse
 
-from ..providers.base import BaseProvider, Track, Album, Playlist
+from ..providers.base import Track, Album, Playlist
 from ..providers.spotify_youtube import SpotifyYouTubeProvider
 from ..providers.tidal_provider import TidalProvider
 
@@ -93,7 +91,10 @@ class MusicDownloader:
                 
                 # Download each track in the album
                 filepaths = []
-                for track in album.tracks:
+                for i, track in enumerate(album.tracks):
+                    if i % 5 == 0:  # Update status message periodically to avoid too much console output
+                        logger.info(f"Downloading track {i+1}/{len(album.tracks)}: {track.title}")
+                        
                     filepath = await provider.download_track(track, album_dir, quality)
                     if filepath:
                         filepaths.append(filepath)
@@ -110,7 +111,10 @@ class MusicDownloader:
                 
                 # Download each track in the playlist
                 filepaths = []
-                for track in playlist.tracks:
+                for i, track in enumerate(playlist.tracks):
+                    if i % 5 == 0:  # Update status message periodically
+                        logger.info(f"Downloading track {i+1}/{len(playlist.tracks)}: {track.title}")
+                        
                     filepath = await provider.download_track(track, playlist_dir, quality)
                     if filepath:
                         filepaths.append(filepath)
@@ -127,7 +131,7 @@ class MusicDownloader:
         else:
             raise ValueError(f"Unsupported URL: {url}")
         
-    async def download_track(self, track_id: str, output_dir: str, quality: int = None) -> str:
+    async def download_track(self, track_id: str, output_dir: str, quality: int = None, progress_callback=None) -> str:
         """
         Download a single track
         
@@ -143,9 +147,9 @@ class MusicDownloader:
             raise ValueError("No provider initialized")
             
         track = await self.current_provider.get_track(track_id)
-        return await self.current_provider.download_track(track, output_dir, quality)
+        return await self.current_provider.download_track(track, output_dir, quality, progress_callback)
         
-    async def download_album(self, album_id: str, output_dir: str, quality: int = None) -> List[str]:
+    async def download_album(self, album_id: str, output_dir: str, quality: int = None, progress_callback=None) -> List[str]:
         """
         Download an entire album
         
@@ -170,14 +174,20 @@ class MusicDownloader:
         
         # Download each track in the album
         filepaths = []
-        for track in album.tracks:
+        for i, track in enumerate(album.tracks):
+            if progress_callback:
+                progress_callback(i, len(album.tracks), f"{track.artist} - {track.title}")
+                
             filepath = await self.current_provider.download_track(track, album_dir, quality)
             if filepath:
                 filepaths.append(filepath)
+                
+        if progress_callback:
+            progress_callback(len(album.tracks), len(album.tracks), "Completed")
         
         return filepaths
         
-    async def download_playlist(self, playlist_id: str, output_dir: str, quality: int = None) -> List[str]:
+    async def download_playlist(self, playlist_id: str, output_dir: str, quality: int = None, progress_callback=None) -> List[str]:
         """
         Download an entire playlist
         
@@ -201,10 +211,16 @@ class MusicDownloader:
         
         # Download each track in the playlist
         filepaths = []
-        for track in playlist.tracks:
+        for i, track in enumerate(playlist.tracks):
+            if progress_callback:
+                progress_callback(i, len(playlist.tracks), f"{track.artist} - {track.title}")
+                
             filepath = await self.current_provider.download_track(track, playlist_dir, quality)
             if filepath:
                 filepaths.append(filepath)
+                
+        if progress_callback:
+            progress_callback(len(playlist.tracks), len(playlist.tracks), "Completed")
         
         return filepaths
         

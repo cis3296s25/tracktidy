@@ -3,7 +3,6 @@ Provider that gets metadata from Spotify and downloads audio from YouTube
 """
 import re
 import os
-import asyncio
 import logging
 from typing import Dict, Any, List, Optional, Tuple
 from urllib.parse import urlparse
@@ -25,6 +24,7 @@ class SpotifyYouTubeProvider(BaseProvider):
         self.config = config or {}
         self.spotify = None
         self.youtube = None
+        self.debug_mode = self.config.get('debug_mode', False)
         
     async def initialize(self):
         """Initialize Spotify and YouTube clients"""
@@ -211,71 +211,199 @@ class SpotifyYouTubeProvider(BaseProvider):
         try:
             if type not in ["track", "album", "playlist", "artist"]:
                 raise ValueError(f"Invalid search type: {type}")
+            
+            # Sanitize the query to avoid special character issues
+            query = query.strip()
+            
+            # Try-except block specific to the search call
+            try:
+                # Perform search via Spotify API
+                results = self.spotify.search(q=query, type=type, limit=limit)
                 
-            # Perform search via Spotify API
-            results = self.spotify.search(q=query, type=type, limit=limit)
+                # Debug output for API response when debug_mode is enabled
+                if self.debug_mode:
+                    import json
+                    logger.info(f"Spotify API response:\n{json.dumps(results, indent=2)}")
+                    # If you need to see playlist data specifically
+                    if type == 'playlist' and 'playlists' in results:
+                        for i, item in enumerate(results['playlists']['items']):
+                            logger.info(f"Playlist {i+1} structure: {item.keys()}")
+                            if 'owner' in item:
+                                logger.info(f"Owner structure: {item['owner'].keys() if item['owner'] else 'None'}")
+            except Exception as search_error:
+                logger.error(f"Error during Spotify search: {search_error}")
+                # Return empty results rather than raising an exception
+                return []
             
             # Extract relevant information based on the search type
             items = []
-            if type == "track":
+            
+            # Process tracks
+            if type == "track" and results and 'tracks' in results and 'items' in results['tracks']:
                 for item in results['tracks']['items']:
-                    items.append({
-                        'id': item['id'],
-                        'name': item['name'],
-                        'artist': ", ".join([artist['name'] for artist in item['artists']]),
-                        'album': item['album']['name'],
-                        'duration': item['duration_ms'] // 1000,
-                        'cover_url': item['album']['images'][0]['url'] if item['album']['images'] else None,
-                        'type': 'track'
-                    })
-            elif type == "album":
+                    try:
+                        # Skip items missing essential data
+                        if not all(k in item for k in ['id', 'name', 'artists', 'album']):
+                            continue
+                            
+                        # Get artists safely
+                        artists = [artist['name'] for artist in item['artists'] if 'name' in artist]
+                        artist_str = ", ".join(artists) if artists else "Unknown Artist"
+                        
+                        # Get album name safely
+                        album_name = item['album']['name'] if 'name' in item['album'] else "Unknown Album"
+                        
+                        # Get cover URL safely
+                        cover_url = None
+                        if ('images' in item['album'] and item['album']['images'] and 
+                            isinstance(item['album']['images'], list) and len(item['album']['images']) > 0):
+                            cover_url = item['album']['images'][0].get('url')
+                        
+                        items.append({
+                            'id': item['id'],
+                            'name': item['name'],
+                            'artist': artist_str,
+                            'album': album_name,
+                            'duration': item['duration_ms'] // 1000 if 'duration_ms' in item else 0,
+                            'cover_url': cover_url,
+                            'type': 'track'
+                        })
+                    except (KeyError, TypeError) as e:
+                        # Silently skip problematic items
+                        continue
+            
+            # Process albums        
+            elif type == "album" and results and 'albums' in results and 'items' in results['albums']:
                 for item in results['albums']['items']:
-                    items.append({
-                        'id': item['id'],
-                        'name': item['name'],
-                        'artist': ", ".join([artist['name'] for artist in item['artists']]),
-                        'cover_url': item['images'][0]['url'] if item['images'] else None,
-                        'type': 'album'
-                    })
-            elif type == "playlist":
+                    try:
+                        # Skip items missing essential data
+                        if not all(k in item for k in ['id', 'name', 'artists']):
+                            continue
+                            
+                        # Get artists safely
+                        artists = [artist['name'] for artist in item['artists'] if 'name' in artist]
+                        artist_str = ", ".join(artists) if artists else "Unknown Artist"
+                        
+                        # Get cover URL safely
+                        cover_url = None
+                        if ('images' in item and item['images'] and 
+                            isinstance(item['images'], list) and len(item['images']) > 0):
+                            cover_url = item['images'][0].get('url')
+                            
+                        items.append({
+                            'id': item['id'],
+                            'name': item['name'],
+                            'artist': artist_str,
+                            'cover_url': cover_url,
+                            'type': 'album'
+                        })
+                    except (KeyError, TypeError) as e:
+                        # Silently skip problematic items
+                        continue
+            
+            # Process playlists        
+            elif type == "playlist" and results and 'playlists' in results and 'items' in results['playlists']:
                 for item in results['playlists']['items']:
-                    items.append({
-                        'id': item['id'],
-                        'name': item['name'],
-                        'owner': item['owner']['display_name'],
-                        'tracks_count': item['tracks']['total'],
-                        'cover_url': item['images'][0]['url'] if item['images'] else None,
-                        'type': 'playlist'
-                    })
-            elif type == "artist":
+                    try:
+                        # Check that necessary fields exist before trying to access them
+                        if not all(k in item for k in ['id', 'name', 'owner', 'tracks']):
+                            # Silently skip without logging - prevents console output
+                            continue
+                            
+                        # Safely access owner's display name
+                        owner_name = "Unknown"
+                        if (item['owner'] is not None and 
+                            isinstance(item['owner'], dict) and 
+                            'display_name' in item['owner'] and 
+                            item['owner']['display_name'] is not None):
+                            owner_name = item['owner']['display_name']
+                            
+                        # Safely access tracks count
+                        tracks_count = 0
+                        if (item['tracks'] is not None and 
+                            isinstance(item['tracks'], dict) and 
+                            'total' in item['tracks'] and 
+                            item['tracks']['total'] is not None):
+                            tracks_count = item['tracks']['total']
+                            
+                        # Safely access cover image
+                        cover_url = None
+                        if ('images' in item and 
+                            item['images'] is not None and 
+                            len(item['images']) > 0 and 
+                            isinstance(item['images'][0], dict) and 
+                            'url' in item['images'][0] and 
+                            item['images'][0]['url'] is not None):
+                            cover_url = item['images'][0]['url']
+                            
+                        items.append({
+                            'id': item['id'],
+                            'name': item['name'],
+                            'owner': owner_name,
+                            'tracks_count': tracks_count,
+                            'cover_url': cover_url,
+                            'type': 'playlist'
+                        })
+                    except (KeyError, TypeError, AttributeError) as e:
+                        # Silently skip errors - prevents error messages in console
+                        continue
+            
+            # Process artists        
+            elif type == "artist" and results and 'artists' in results and 'items' in results['artists']:
                 for item in results['artists']['items']:
-                    items.append({
-                        'id': item['id'],
-                        'name': item['name'],
-                        'popularity': item['popularity'],
-                        'cover_url': item['images'][0]['url'] if item['images'] else None,
-                        'type': 'artist'
-                    })
+                    try:
+                        # Skip items missing essential data
+                        if not all(k in item for k in ['id', 'name']):
+                            continue
+                            
+                        # Get popularity safely
+                        popularity = item.get('popularity', 0)
+                        
+                        # Get cover URL safely
+                        cover_url = None
+                        if ('images' in item and item['images'] and 
+                            isinstance(item['images'], list) and len(item['images']) > 0):
+                            cover_url = item['images'][0].get('url')
+                            
+                        items.append({
+                            'id': item['id'],
+                            'name': item['name'],
+                            'popularity': popularity,
+                            'cover_url': cover_url,
+                            'type': 'artist'
+                        })
+                    except (KeyError, TypeError) as e:
+                        # Silently skip problematic items
+                        continue
             
             return items
             
         except Exception as e:
-            logger.error(f"Error searching Spotify: {e}")
-            raise
+            logger.error(f"Error in Spotify search function: {e}")
+            # Return empty list instead of raising, to prevent UI crashes
+            return []
         
-    async def download_track(self, track: Track, output_path: str, quality: int = None) -> str:
+    async def download_track(self, track: Track, output_path: str, quality: int = None, progress_callback=None) -> str:
         """Download a track from YouTube using metadata from Spotify"""
         try:
             # Form a search query for YouTube
             search_query = f"{track.title} {track.artist}"
             
-            # Remove any featuring artists for a cleaner search
-            search_query = re.sub(r'\(feat\..*?\)', '', search_query)
-            search_query = re.sub(r'\bft\..*?$', '', search_query)
+            # Remove any featuring artists and common noise for a cleaner search
+            search_query = re.sub(r'\(feat\..*?\)', '', search_query)  # Remove (feat. Artist)
+            search_query = re.sub(r'\(ft\..*?\)', '', search_query)    # Remove (ft. Artist)
+            search_query = re.sub(r'\bft\..*?$', '', search_query)     # Remove trailing ft. Artist
+            search_query = re.sub(r'\[.*?\]', '', search_query)        # Remove [content in brackets]
+            search_query = re.sub(r'\s+', ' ', search_query)           # Clean up extra spaces
+            search_query = search_query.strip()                        # Remove leading/trailing spaces
             
             # Show some debug info
             logger.info(f"Searching for: {search_query}")
             logger.info(f"Track duration: {track.duration} seconds")
+            
+            # Update progress if callback provided
+            if progress_callback:
+                progress_callback('search', 0.1, f"Searching for: {track.title}")
             
             # Search for the track on YouTube
             youtube_url = await self.youtube.search_best_match(
@@ -285,9 +413,13 @@ class SpotifyYouTubeProvider(BaseProvider):
             
             if not youtube_url:
                 logger.error(f"No YouTube match found for: {track.title} by {track.artist}")
+                if progress_callback:
+                    progress_callback('error', 0, f"No match found for: {track.title}")
                 raise Exception(f"Could not find YouTube match for: {track.title} by {track.artist}")
             
             logger.info(f"Found YouTube match: {youtube_url}")
+            if progress_callback:
+                progress_callback('found', 0.2, f"Found match for: {track.title}")
             
             # Generate a clean filename for the track
             filename = f"{track.artist} - {track.title}"
@@ -297,19 +429,51 @@ class SpotifyYouTubeProvider(BaseProvider):
             # Download the track from YouTube
             quality_str = "320" if quality is None or quality >= 1 else "128"
             
-            # Add a small delay to make sure YouTube doesn't throttle us
-            time.sleep(1)
+            # Add a small delay to avoid YouTube throttling
+            time.sleep(0.5)  # Reduced wait time for better user experience
             
-            # Perform the download
-            download_path = await self.youtube.download(youtube_url, output_path, filename, quality_str)
+            # Define a download progress handler to pass through to the YouTube downloader
+            def download_progress_handler(stage, percent, status):
+                if progress_callback:
+                    # Map the download stages to overall progress (0.2-0.8 range for download)
+                    if stage == 'start':
+                        progress_callback('download', 0.2, status)
+                    elif stage == 'download':
+                        # Map the download percent to 0.2-0.7 range
+                        mapped_percent = 0.2 + (percent * 0.5)  # 0.5 is 50% of our progress space
+                        progress_callback('download', mapped_percent, status)
+                    elif stage == 'processing':
+                        progress_callback('processing', 0.7, status)
+                    elif stage == 'complete':
+                        progress_callback('processing', 0.8, "Processing audio...")
+                    elif stage == 'error':
+                        progress_callback('error', percent, status)
+            
+            # Perform the download with progress tracking
+            download_path = await self.youtube.download(
+                youtube_url, 
+                output_path, 
+                filename, 
+                quality_str,
+                progress_callback=download_progress_handler
+            )
             
             if not download_path or not os.path.exists(download_path):
                 logger.error(f"Download failed for {track.title} by {track.artist}")
+                if progress_callback:
+                    progress_callback('error', 0, f"Download failed for {track.title}")
                 raise Exception(f"Download failed for {track.title} by {track.artist}")
                 
             # Embed metadata from Spotify into the downloaded file
             logger.info(f"Embedding metadata for {track.title}")
+            if progress_callback:
+                progress_callback('metadata', 0.9, f"Adding metadata to {track.title}")
+                
             embed_metadata(download_path, track)
+            
+            # Signal completion    
+            if progress_callback:
+                progress_callback('complete', 1.0, f"Completed: {track.title}")
                 
             logger.info(f"Successfully downloaded: {download_path}")
             return download_path

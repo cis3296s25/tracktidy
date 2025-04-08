@@ -4,7 +4,6 @@ Metadata embedding functionality for downloaded music files
 import os
 import logging
 import requests
-from io import BytesIO
 from typing import Optional
 import mutagen
 from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB, TDRC, TRCK, TCON, USLT

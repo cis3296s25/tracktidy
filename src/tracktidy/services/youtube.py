@@ -4,7 +4,7 @@ YouTube service for TrackTidy
 import logging
 import re
 import os
-from typing import Dict, Any, Optional, List
+from typing import Optional, List, Callable
 import yt_dlp
 
 from ..services.ffmpeg import find_ffmpeg_executable, find_ffprobe_executable
@@ -82,12 +82,14 @@ class YouTubeClient:
             with yt_dlp.YoutubeDL(search_options) as ydl:
                 logger.debug(f"Searching YouTube Music for: {query}")
                 try:
-                    # Try YouTube Music first
+                    # Try YouTube Music first for better song matches
+                    logger.debug(f"Trying YouTube Music search for: {query}")
                     info = ydl.extract_info(ytmusic_term, download=False)
                     logger.debug("YouTube Music search successful")
                 except Exception as e:
                     logger.debug(f"YouTube Music search failed: {e}, falling back to regular YouTube")
                     # Fall back to regular YouTube search
+                    logger.debug(f"Trying regular YouTube search for: {query}")
                     info = ydl.extract_info(search_term, download=False)
                 
                 if not info or 'entries' not in info:
@@ -221,7 +223,8 @@ class YouTubeClient:
             logger.error(f"Simple search failed: {e}")
             return None
         
-    async def download(self, url: str, output_path: str, filename: str = None, quality: str = "320") -> str:
+    async def download(self, url: str, output_path: str, filename: str = None, quality: str = "320",
+                      progress_callback: Optional[Callable[[str, float, str], None]] = None) -> str:
         """
         Download audio from a YouTube URL
         
@@ -230,6 +233,7 @@ class YouTubeClient:
             output_path: Directory to save the file
             filename: Output filename without extension
             quality: Audio quality (bitrate for MP3)
+            progress_callback: Callback function for progress updates
             
         Returns:
             Path to downloaded file
@@ -260,11 +264,53 @@ class YouTubeClient:
             # Use default template with title
             download_options['outtmpl'] = os.path.join(output_path, '%(title)s.%(ext)s')
         
+        # Custom progress hook to track download progress
+        def progress_hook(d):
+            if d['status'] == 'downloading':
+                if progress_callback:
+                    # Extract percentage from _percent_str which is like "100.0%"
+                    percent_str = d.get('_percent_str', '0%').strip().replace('%', '')
+                    try:
+                        percent = float(percent_str) if percent_str else 0
+                    except ValueError:
+                        percent = 0
+                        
+                    # Extract download speed
+                    speed = d.get('_speed_str', 'unknown speed')
+                    
+                    # Call the progress callback with status info
+                    status = f"Downloading: {percent:.1f}% ({speed})"
+                    progress_callback('download', percent / 100.0, status)
+                    
+            elif d['status'] == 'finished':
+                if progress_callback:
+                    progress_callback('download', 1.0, "Download complete, processing...")
+                    
+            elif d['status'] == 'error':
+                if progress_callback:
+                    progress_callback('error', 0, f"Error: {d.get('error', 'unknown error')}")
+        
+        # Add our custom progress hook
+        download_options['progress_hooks'] = [progress_hook]
+        
         # Perform the download
         try:
             with yt_dlp.YoutubeDL(download_options) as ydl:
                 logger.debug(f"Downloading audio from: {url}")
+                
+                # Start download process
+                if progress_callback:
+                    progress_callback('start', 0, "Starting download...")
+                    
                 info = ydl.extract_info(url, download=True)
+                
+                # Signal post-processing step
+                if progress_callback:
+                    progress_callback('processing', 0, "Converting audio...")
+                
+                # Wait a moment for file operations to complete
+                import time
+                time.sleep(0.5)  # Reduced wait time for better responsiveness
                 
                 if filename:
                     output_file = os.path.join(output_path, f"{filename}.mp3")
@@ -275,6 +321,9 @@ class YouTubeClient:
                     output_file = os.path.join(output_path, f"{title}.mp3")
                 
                 if os.path.exists(output_file):
+                    # Signal completion
+                    if progress_callback:
+                        progress_callback('complete', 1.0, "Download complete!")
                     return output_file
                     
                 # Try to find the file in case the filename normalization was different
@@ -285,10 +334,20 @@ class YouTubeClient:
                         [os.path.join(output_path, f) for f in mp3_files], 
                         key=os.path.getctime
                     )
+                    
+                    # Signal completion
+                    if progress_callback:
+                        progress_callback('complete', 1.0, "Download complete!")
                     return newest_file
                 
+                # Signal failure
+                if progress_callback:
+                    progress_callback('error', 0, "Download failed - couldn't find output file")
                 return None
                 
         except Exception as e:
             logger.error(f"Error downloading from YouTube: {e}")
+            # Signal error through callback
+            if progress_callback:
+                progress_callback('error', 0, f"Error: {str(e)}")
             return None
