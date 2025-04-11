@@ -97,7 +97,9 @@ async def edit_metadata():
 
     # Ask for the file path
     while True:
-        file_path = Prompt.ask("[#89dceb]Enter the path to the audio file[/#89dceb]").strip()
+        file_path = Prompt.ask("[#89dceb]Enter the path to the audio file ['exit' to quit][/#89dceb]").strip()
+        if file_path.strip().lower() == "exit":
+            return
         if not os.path.isfile(file_path):
             console.print("[bold #f38ba8]❌ Error: File not found! Please enter a valid file path.[/bold #f38ba8]")
             continue
