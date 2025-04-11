@@ -15,6 +15,8 @@ from tracktidy.core.audio import convert_audio_file
 
 console = Console()
 
+go_back = False
+
 async def batch_process():
     """Main batch processing function that presents batch operation options"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy - Batch Processor 🎵[/bold #f5e0dc]\n")
@@ -32,6 +34,7 @@ async def batch_process():
     # Option 3 just returns to main menu
 
 async def get_files_for_batch(file_type="audio", extensions=None):
+    global go_back
     """Get a list of files for batch processing"""
     if extensions is None:
         if file_type == "audio":
@@ -44,8 +47,11 @@ async def get_files_for_batch(file_type="audio", extensions=None):
     
     while True:
         # Ask for directory
-        directory = Prompt.ask("[#cba6f7]Enter directory path containing files to process[/#cba6f7]").strip()
-        
+        directory = Prompt.ask("[#cba6f7]Enter directory path containing files to process ['back' to batch][/#cba6f7]").strip()
+        if directory.lower() == "back":
+                print("GO_BACK: ", directory)
+                go_back = True
+                return
         if not os.path.isdir(directory):
             console.print("[bold #f38ba8]❌ Error: Directory not found![/bold #f38ba8]")
             continue
@@ -94,11 +100,16 @@ async def get_files_for_batch(file_type="audio", extensions=None):
             return []
 
 async def batch_metadata():
+    global go_back
     """Batch edit metadata for multiple files"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy - Batch Metadata Editor 🎵[/bold #f5e0dc]\n")
     
     # Get files
     files = await get_files_for_batch(file_type="audio")
+    print("AFTER: ", go_back)
+    if go_back:
+        print("METADATA: ", go_back)
+        return
     if not files:
         console.print("[#f38ba8]Batch operation cancelled.[/#f38ba8]")
         Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")
@@ -192,11 +203,15 @@ async def batch_metadata():
     Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")
 
 async def batch_convert():
+    global go_back
     """Batch convert multiple audio files"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy - Batch Audio Converter 🎵[/bold #f5e0dc]\n")
     
     # Get files
     files = await get_files_for_batch(file_type="audio")
+    if go_back:
+        print("CONVERT: ", go_back)
+        return
     if not files:
         console.print("[#f38ba8]Batch operation cancelled.[/#f38ba8]")
         Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")
