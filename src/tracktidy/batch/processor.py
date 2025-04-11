@@ -49,7 +49,6 @@ async def get_files_for_batch(file_type="audio", extensions=None):
         # Ask for directory
         directory = Prompt.ask("[#cba6f7]Enter directory path containing files to process ['back' to batch][/#cba6f7]").strip()
         if directory.lower() == "back":
-                print("GO_BACK: ", directory)
                 go_back = True
                 return
         if not os.path.isdir(directory):
@@ -106,11 +105,8 @@ async def batch_metadata():
     
     # Get files
     files = await get_files_for_batch(file_type="audio")
-    print("AFTER: ", go_back)
-    if go_back:
-        print("METADATA: ", go_back)
-        return
-    if not files:
+    if not files or go_back:
+        go_back = False
         console.print("[#f38ba8]Batch operation cancelled.[/#f38ba8]")
         Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")
         return
@@ -209,10 +205,8 @@ async def batch_convert():
     
     # Get files
     files = await get_files_for_batch(file_type="audio")
-    if go_back:
-        print("CONVERT: ", go_back)
-        return
-    if not files:
+    if not files or go_back:
+        go_back = False
         console.print("[#f38ba8]Batch operation cancelled.[/#f38ba8]")
         Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")
         return
