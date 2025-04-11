@@ -97,7 +97,7 @@ async def edit_metadata():
 
     # Ask for the file path
     while True:
-        file_path = Prompt.ask("[#89dceb]Enter the path to the audio file ['exit' to quit][/#89dceb]").strip()
+        file_path = Prompt.ask("[#89dceb]Enter the path to the audio file ['exit' for menu][/#89dceb]").strip()
         if file_path.strip().lower() == "exit":
             return
         if not os.path.isfile(file_path):
@@ -180,46 +180,79 @@ async def edit_metadata():
                 console.print(f"[#f38ba8]Couldn't read {field}: {e}[/#f38ba8]")
                 current_metadata[field] = ""
 
-        console.print("\n[#cba6f7]Enter new metadata values (press Enter to keep current value):[/#cba6f7]")
+        while True:
+            console.print("\n[#cba6f7]Enter new metadata values (press Enter to keep current value):[/#cba6f7]")
 
-        # Prompt user for new metadata input
-        metadata_updates = {}
-        for field in metadata_fields:
-            new_value = Prompt.ask(f"[#89b4fa]{field.capitalize()}[/#89b4fa]", default=current_metadata[field]).strip()
-            if new_value and new_value != current_metadata[field]:
-                metadata_updates[field] = new_value
-        
-        if metadata_updates:
-            # Call the helper function to apply updates
-            if await edit_metadata_file(file_path, metadata_updates):
-                console.print("\n[bold #a6e3a1]✅ Metadata updated successfully![/bold #a6e3a1]")
-                
-                # Reload the file to show updated metadata
-                if file_ext == '.mp3':
-                    audio = MP3(file_path, ID3=EasyID3)
-                elif file_ext == '.flac':
-                    audio = FLAC(file_path)
+            # Prompt user for new metadata input
+            metadata_updates = {}
+            for field in metadata_fields:
+                new_value = Prompt.ask(f"[#89b4fa]{field.capitalize()}[/#89b4fa]", default=current_metadata[field]).strip()
+                if new_value and new_value != current_metadata[field]:
+                    metadata_updates[field] = new_value
+            
+            if metadata_updates:
+                # Confirm changes
+                while True:
+                    console.print("\n[bold #f38ba8]Confirm metadata changes?\n[/bold #f38ba8]")
+                    for field in metadata_fields:
+                        try:
+                            if isinstance(audio, FLAC):
+                                value = audio.get(field, ["[Not Set]"])
+                            elif hasattr(audio, 'get'):
+                                value = audio.get(field, ["[Not Set]"])
+                            else:
+                                value = audio.tags.get(field, ["[Not Set]"])
+                                
+                            current_field = (
+                                metadata_updates[field] if field in metadata_updates
+                                else ', '.join(value) if value
+                                else '[Not Set]'
+                            )                           
+                            console.print(f"[#f9e2af]{field.capitalize()}[/#f9e2af]: {current_field}")
+                        except Exception as e:
+                            console.print(f"[#f38ba8]Couldn't read updated {field}: {e}[/#f38ba8]")
+                    
+                    confirm_metadata_changes = Prompt.ask("\n[#a6e3a1](y/n)")
+                    if confirm_metadata_changes != "y" and confirm_metadata_changes != "n":
+                        console.print("\n[bold #f38ba8]❌ Error: Invalid confirmation! Enter: 'y' or 'n'[/bold #f38ba8]")
+                        continue
+                    else:
+                        break
+                if confirm_metadata_changes == "n":
+                    continue
+
+                # Call the helper function to apply updates
+                if await edit_metadata_file(file_path, metadata_updates):
+                    console.print("\n[bold #a6e3a1]✅ Metadata updated successfully![/bold #a6e3a1]")
+                    
+                    # Reload the file to show updated metadata
+                    if file_ext == '.mp3':
+                        audio = MP3(file_path, ID3=EasyID3)
+                    elif file_ext == '.flac':
+                        audio = FLAC(file_path)
+                    else:
+                        audio = File(file_path)
+                    
+                    # Show the updated metadata
+                    console.print("\n[#f9e2af]--- Updated Metadata ---[/#f9e2af]")
+                    for field in metadata_fields:
+                        try:
+                            if isinstance(audio, FLAC):
+                                value = audio.get(field, ["[Not Set]"])
+                            elif hasattr(audio, 'get'):
+                                value = audio.get(field, ["[Not Set]"])
+                            else:
+                                value = audio.tags.get(field, ["[Not Set]"])
+                            
+                            console.print(f"[#94e2d5]{field.capitalize()}[/#94e2d5]: {', '.join(value) if value else '[Not Set]'}")
+                        except Exception as e:
+                            console.print(f"[#f38ba8]Couldn't read updated {field}: {e}[/#f38ba8]")
                 else:
-                    audio = File(file_path)
-                
-                # Show the updated metadata
-                console.print("\n[#f9e2af]--- Updated Metadata ---[/#f9e2af]")
-                for field in metadata_fields:
-                    try:
-                        if isinstance(audio, FLAC):
-                            value = audio.get(field, ["[Not Set]"])
-                        elif hasattr(audio, 'get'):
-                            value = audio.get(field, ["[Not Set]"])
-                        else:
-                            value = audio.tags.get(field, ["[Not Set]"])
-                        
-                        console.print(f"[#94e2d5]{field.capitalize()}[/#94e2d5]: {', '.join(value) if value else '[Not Set]'}")
-                    except Exception as e:
-                        console.print(f"[#f38ba8]Couldn't read updated {field}: {e}[/#f38ba8]")
+                    console.print("\n[bold #f38ba8]❌ Failed to update metadata![/bold #f38ba8]")
             else:
-                console.print("\n[bold #f38ba8]❌ Failed to update metadata![/bold #f38ba8]")
-        else:
-            console.print("\n[#89dceb]No changes made to metadata.[/#89dceb]")
+                console.print("\n[#89dceb]No changes made to metadata.[/#89dceb]")
+            
+            break
             
         # Pause before returning to the menu
         Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")

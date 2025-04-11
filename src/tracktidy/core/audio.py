@@ -154,28 +154,38 @@ async def convert_audio():
     """Interactive audio conversion UI"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy Audio Converter 🎵[/bold #f5e0dc]\n")
 
-    # Get file path
+    # Loop to enable back feature
+    go_back = False
     while True:
-        file_path = Prompt.ask("[#89dceb]Enter the path of the audio file to convert[/#89dceb]").strip()
-        if not file_path:
-            console.print("[bold #f38ba8]❌ Error: Path cannot be empty! Try again.[/bold #f38ba8]")
-            continue
-        if not os.path.isfile(file_path):
-            console.print("[bold #f38ba8]❌ Error: File not found! Try again.[/bold #f38ba8]")
-            continue
-        break
-        
-    # Display the selected file with its full path for clarity
-    console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")
+        # Get file path
+        while True:
+            file_path = Prompt.ask("[#89dceb]Enter the path of the audio file to convert ['exit' for menu][/#89dceb]").strip()
+            if file_path.strip().lower() == "exit":
+                return
+            if not file_path:
+                console.print("[bold #f38ba8]❌ Error: Path cannot be empty! Try again.[/bold #f38ba8]")
+                continue
+            if not os.path.isfile(file_path):
+                console.print("[bold #f38ba8]❌ Error: File not found! Try again.[/bold #f38ba8]")
+                continue
+            break
+            
+        # Display the selected file with its full path for clarity
+        console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")
 
-    # Choose the output format
-    valid_formats = ["mp3", "wav", "flac", "aac", "ogg"]
-    while True:
-        output_format = Prompt.ask("[#cba6f7]Enter the output format (mp3, wav, flac, aac, ogg)[/#cba6f7]").strip().lower()
-        if output_format not in valid_formats:
-            console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Unsupported format!")
-            continue
-        break
+        # Choose the output format
+        valid_formats = ["mp3", "wav", "flac", "aac", "ogg"]
+        while True:
+            output_format = Prompt.ask("[#cba6f7]Enter the output format (mp3, wav, flac, aac, ogg) ['back' to path][/#cba6f7]").strip().lower()
+            if output_format.strip().lower() == "back":
+                go_back = True
+                continue
+            if output_format not in valid_formats:
+                console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Unsupported format!")
+                continue
+            break
+        if not go_back:
+            break
 
     output_file = os.path.splitext(file_path)[0] + f".{output_format}"
     
