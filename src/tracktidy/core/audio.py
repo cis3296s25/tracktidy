@@ -155,8 +155,8 @@ async def convert_audio():
     console.print("\n[bold #f5e0dc]🎵 TrackTidy Audio Converter 🎵[/bold #f5e0dc]\n")
 
     # Loop to enable back feature
-    go_back = False
     while True:
+        go_back = False
         # Get file path
         while True:
             file_path = Prompt.ask("[#89dceb]Enter the path of the audio file to convert ['exit' for menu][/#89dceb]").strip()
@@ -177,9 +177,9 @@ async def convert_audio():
         valid_formats = ["mp3", "wav", "flac", "aac", "ogg"]
         while True:
             output_format = Prompt.ask("[#cba6f7]Enter the output format (mp3, wav, flac, aac, ogg) ['back' to path][/#cba6f7]").strip().lower()
-            if output_format.strip().lower() == "back":
+            if output_format == "back":
                 go_back = True
-                continue
+                break
             if output_format not in valid_formats:
                 console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Unsupported format!")
                 continue
