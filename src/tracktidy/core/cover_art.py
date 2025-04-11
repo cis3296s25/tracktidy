@@ -91,8 +91,19 @@ async def fetch_cover_art():
     # Get the MP3 file path from the user
     while True:
         file_path = Prompt.ask("[#cba6f7]Enter the path to the MP3 file[/#cba6f7]").strip()
+        
+        # Handle paths with quotes (often added when dragging files with spaces)
+        if (file_path.startswith('"') and file_path.endswith('"')) or \
+           (file_path.startswith("'") and file_path.endswith("'")):
+            file_path = file_path[1:-1]
+        
+        # Normalize and expand the path
+        file_path = os.path.normpath(os.path.expanduser(file_path))
+        
         if not os.path.isfile(file_path):
             console.print("[bold #f38ba8]❌ Error: File not found! Please enter a valid file path.[/bold #f38ba8]")
+            console.print(f"[#89dceb]Attempted to find: {file_path}[/#89dceb]")
+            console.print("[#89dceb]Tip: For files with spaces in the name, you can drag and drop the file here.[/#89dceb]")
             continue
         
         if not file_path.lower().endswith('.mp3'):

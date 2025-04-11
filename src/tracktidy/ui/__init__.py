@@ -1,3 +1,3 @@
 """
-User interface components for TrackTidy
+UI module for TrackTidy
 """
