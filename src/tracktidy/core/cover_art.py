@@ -59,46 +59,59 @@ async def fetch_cover_art():
                 Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
                 return
 
-    # Get song name and artist from user
+    # Loop for 'back' functionality (escape path prompt and research song)
     while True:
-        song_name = Prompt.ask("[#89dceb]Enter the song name[/#89dceb]").strip()
-        if not song_name:
-            console.print("[bold #f38ba8]❌ Error: Song name cannot be empty![/bold #f38ba8]")
-            continue
-        break
+        # Loop for '@back' functionality (use of '@' tries to distinguish from song name)
+        while True:
+            # Get song name and artist from user
+            while True:
+                song_name = Prompt.ask("[#89dceb]Enter the song name ['@back' for back][/#89dceb]").strip()
+                if song_name == "@back":
+                    return
+                if not song_name:
+                    console.print("[bold #f38ba8]❌ Error: Song name cannot be empty![/bold #f38ba8]")
+                    continue
+                break
 
-    while True:
-        artist_name = Prompt.ask("[#89dceb]Enter the artist name[/#89dceb]").strip()
-        if not artist_name:
-            console.print("[bold #f38ba8]❌ Error: Artist name cannot be empty![/bold #f38ba8]")
-            continue
-        break
+            while True:
+                artist_name = Prompt.ask("[#89dceb]Enter the artist name ['@back' for back][/#89dceb]").strip()
+                if not artist_name:
+                    console.print("[bold #f38ba8]❌ Error: Artist name cannot be empty![/bold #f38ba8]")
+                    continue
+                break
+            if artist_name != "@back":
+                break
 
-    # Search for the track on Spotify
-    cover_url, track_name, track_artist, album_name = search_track(sp, song_name, artist_name)
-    
-    if not cover_url:
-        console.print("[bold #f38ba8]❌ No cover art found for this track.[/bold #f38ba8]")
-        Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
-        return
-
-    console.print(f"[#94e2d5]🎨 Cover Art Found:[/#94e2d5] {cover_url}")
-    
-    # Show track name and artist for confirmation
-    console.print(f"[#94e2d5]Track:[/#94e2d5] {track_name} by {track_artist}")
-    console.print(f"[#94e2d5]Album:[/#94e2d5] {album_name}")
-    
-    # Get the MP3 file path from the user
-    while True:
-        file_path = Prompt.ask("[#cba6f7]Enter the path to the MP3 file[/#cba6f7]").strip()
-        if not os.path.isfile(file_path):
-            console.print("[bold #f38ba8]❌ Error: File not found! Please enter a valid file path.[/bold #f38ba8]")
-            continue
+        # Search for the track on Spotify
+        cover_url, track_name, track_artist, album_name = search_track(sp, song_name, artist_name)
         
-        if not file_path.lower().endswith('.mp3'):
-            console.print("[bold #f38ba8]❌ Error: File must be an MP3 file![/bold #f38ba8]")
-            continue
-        break
+        if not cover_url:
+            console.print("[bold #f38ba8]❌ No cover art found for this track.[/bold #f38ba8]")
+            Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
+            return
+
+        console.print(f"[#94e2d5]🎨 Cover Art Found:[/#94e2d5] {cover_url}")
+        
+        # Show track name and artist for confirmation
+        console.print(f"[#94e2d5]Track:[/#94e2d5] {track_name} by {track_artist}")
+        console.print(f"[#94e2d5]Album:[/#94e2d5] {album_name}")
+        
+        # Get the MP3 file path from the user
+        while True:
+            file_path = Prompt.ask("[#cba6f7]Enter the path to the MP3 file ['back' for back][/#cba6f7]").strip()
+            if file_path == "back":
+                break
+            if not os.path.isfile(file_path):
+                console.print("[bold #f38ba8]❌ Error: File not found! Please enter a valid file path.[/bold #f38ba8]")
+                continue
+            
+            if not file_path.lower().endswith('.mp3'):
+                console.print("[bold #f38ba8]❌ Error: File must be an MP3 file![/bold #f38ba8]")
+                continue
+            break
+        if file_path != "back":
+            break
+
     
     # Display the selected file with its full path for clarity
     console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")
