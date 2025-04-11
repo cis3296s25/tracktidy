@@ -19,19 +19,26 @@ go_back = False
 
 async def batch_process():
     """Main batch processing function that presents batch operation options"""
-    console.print("\n[bold #f5e0dc]🎵 TrackTidy - Batch Processor 🎵[/bold #f5e0dc]\n")
-    
-    console.print("[#89b4fa]1.[/#89b4fa][bold] Batch Metadata Editing[/bold]")
-    console.print("[#b4befe]2.[/#b4befe][bold] Batch Audio Conversion[/bold]")
-    console.print("[#f38ba8]3.[/#f38ba8][bold] Return to Main Menu[/bold]")
-    
-    choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3"])
-    
-    if choice == "1":
-        await batch_metadata()
-    elif choice == "2":
-        await batch_convert()
-    # Option 3 just returns to main menu
+    global go_back
+    # Loop for 'back' functionality 
+    while True:
+        go_back = False
+        console.print("\n[bold #f5e0dc]🎵 TrackTidy - Batch Processor 🎵[/bold #f5e0dc]\n")
+        
+        console.print("[#89b4fa]1.[/#89b4fa][bold] Batch Metadata Editing[/bold]")
+        console.print("[#b4befe]2.[/#b4befe][bold] Batch Audio Conversion[/bold]")
+        console.print("[#f38ba8]3.[/#f38ba8][bold] Return to Main Menu[/bold]")
+        
+        choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3"])
+        
+        if choice == "1":
+            await batch_metadata()
+        elif choice == "2":
+            await batch_convert()
+        # Option 3 just returns to main menu
+        if go_back:
+            continue
+        break
 
 async def get_files_for_batch(file_type="audio", extensions=None):
     global go_back
@@ -105,7 +112,9 @@ async def batch_metadata():
     
     # Get files
     files = await get_files_for_batch(file_type="audio")
-    if not files or go_back:
+    if go_back:
+        return
+    if not files:
         go_back = False
         console.print("[#f38ba8]Batch operation cancelled.[/#f38ba8]")
         Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")
@@ -205,7 +214,9 @@ async def batch_convert():
     
     # Get files
     files = await get_files_for_batch(file_type="audio")
-    if not files or go_back:
+    if go_back:
+        return
+    if not files:
         go_back = False
         console.print("[#f38ba8]Batch operation cancelled.[/#f38ba8]")
         Prompt.ask("\n[#89b4fa]Press Enter to return to the batch menu...[/#89b4fa]")

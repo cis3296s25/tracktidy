@@ -154,7 +154,7 @@ async def convert_audio():
     """Interactive audio conversion UI"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy Audio Converter 🎵[/bold #f5e0dc]\n")
 
-    # Loop to enable back feature
+    # Loop for 'back' functionality
     while True:
         go_back = False
         # Get file path
