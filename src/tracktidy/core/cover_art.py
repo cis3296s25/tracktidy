@@ -27,6 +27,10 @@ def setup_spotify():
     # Get Spotify credentials
     SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET = get_spotify_credentials()
     
+    # Check if user wants to return to main menu
+    if SPOTIPY_CLIENT_ID == "-1" and SPOTIPY_CLIENT_SECRET == "-1":
+        return "return_to_menu"
+    
     # Initialize Spotify API client
     if SPOTIPY_CLIENT_ID and SPOTIPY_CLIENT_SECRET:
         sp = initialize_spotify_client(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET)
@@ -35,13 +39,19 @@ def setup_spotify():
 
 async def fetch_cover_art():
     """Interactive cover art fetching UI"""
-    global sp
+    global sp, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
     
-    console.print("\n[bold #f5e0dc]🎵 TrackTidy Cover Art Fetcher 🎵[/bold #f5e0dc]\n")
+    console.print("\n[bold #f5e0dc]🎵 TrackTidy Cover Art Fetcher  🎵[/bold #f5e0dc]\n")
     
     # Initialize Spotify client if not already initialized
     if sp is None:
-        if not setup_spotify():
+        setup_result = setup_spotify()
+        
+        # Check if user wants to return to main menu
+        if setup_result == "return_to_menu":
+            return
+            
+        if not setup_result:
             console.print("[bold #f38ba8]❌ Error: Spotify API connection failed![/bold #f38ba8]")
             console.print("[#89dceb]This could be due to invalid credentials or network issues.[/#89dceb]")
             
@@ -51,7 +61,13 @@ async def fetch_cover_art():
             
             if reset.lower() == "y":
                 # Force credential reset by calling setup_spotify again
-                if not setup_spotify():
+                setup_result = setup_spotify()
+                
+                # Check again if user wants to return to main menu
+                if setup_result == "return_to_menu":
+                    return
+                    
+                if not setup_result:
                     console.print("[#f38ba8]Failed to set up Spotify connection.[/#f38ba8]")
                     Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
                     return
@@ -60,6 +76,58 @@ async def fetch_cover_art():
                 return
 
     # Get song name and artist from user
+    console.print("\n[#89b4fa]1.[/#89b4fa][bold] Enter Song Details[/bold]")
+    console.print("[#b4befe]2.[/#b4befe][bold] Reset Spotify API Credentials[/bold]")
+    console.print("[#f38ba8]3.[/#f38ba8][bold] Return to Main Menu[/bold]")
+    
+    choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3"])
+    
+    if choice == "3":
+        return
+    
+    # Main menu loop - allows returning to menu after credential reset
+    while True:
+        if choice == "2":
+            # Reset Spotify credentials
+            console.print("[#89dceb]Resetting Spotify API credentials...[/#89dceb]")
+            
+            # Clear existing credentials
+            sp = None
+            SPOTIPY_CLIENT_ID = ""
+            SPOTIPY_CLIENT_SECRET = ""
+            
+            # Force credential reset
+            setup_result = setup_spotify()
+            
+            # Check if user wants to return to main menu
+            if setup_result == "return_to_menu":
+                return
+                
+            if not setup_result:
+                console.print("[#f38ba8]Failed to set up Spotify connection.[/#f38ba8]")
+                Prompt.ask("\n[#89b4fa]Press Enter to return to the main menu...[/#89b4fa]")
+                return
+                
+            console.print("[bold #a6e3a1]✅ Spotify credentials reset successfully![/bold #a6e3a1]")
+            
+            # Return to menu instead of recursive call
+            console.print("\n[#89b4fa]1.[/#89b4fa][bold] Enter Song Details[/bold]")
+            console.print("[#b4befe]2.[/#b4befe][bold] Reset Spotify API Credentials[/bold]")
+            console.print("[#f38ba8]3.[/#f38ba8][bold] Return to Main Menu[/bold]")
+            
+            choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3"])
+            
+            if choice == "3":
+                return
+                
+            # Continue the loop if they choose option 2 again
+            if choice == "2":
+                continue
+                
+        # Break out of the loop if they choose option 1
+        break
+    
+    # Get song name
     while True:
         song_name = Prompt.ask("[#89dceb]Enter the song name[/#89dceb]").strip()
         if not song_name:
@@ -67,6 +135,7 @@ async def fetch_cover_art():
             continue
         break
 
+    # Get artist name
     while True:
         artist_name = Prompt.ask("[#89dceb]Enter the artist name[/#89dceb]").strip()
         if not artist_name:
@@ -88,9 +157,33 @@ async def fetch_cover_art():
     console.print(f"[#94e2d5]Track:[/#94e2d5] {track_name} by {track_artist}")
     console.print(f"[#94e2d5]Album:[/#94e2d5] {album_name}")
     
+    # Ask if user wants to continue or return to main menu
+    console.print("\n[#89b4fa]1.[/#89b4fa][bold] Continue and Add Cover Art to MP3[/bold]")
+    console.print("[#f38ba8]2.[/#f38ba8][bold] Return to Main Menu[/bold]")
+    
+    choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2"])
+    
+    if choice == "2":
+        return
+    
+    def scan_directory_for_mp3(directory_path):
+        """Scan a directory for MP3 files"""
+        mp3_files = []
+        
+        try:
+            for file in os.listdir(directory_path):
+                file_path = os.path.join(directory_path, file)
+                if os.path.isfile(file_path) and file_path.lower().endswith('.mp3'):
+                    mp3_files.append(file_path)
+        except Exception as e:
+            console.print(f"[bold #f38ba8]❌ Error scanning directory:[/bold #f38ba8] {e}")
+        
+        return mp3_files
+    
     # Get the MP3 file path from the user
     while True:
-        file_path = Prompt.ask("[#cba6f7]Enter the path to the MP3 file[/#cba6f7]").strip()
+        console.print("[#94e2d5]You can enter a file path or a folder path containing MP3 files[/#94e2d5]")
+        file_path = Prompt.ask("[#cba6f7]Enter the path to the MP3 file or folder[/#cba6f7]").strip()
         
         # Handle paths with quotes (often added when dragging files with spaces)
         if (file_path.startswith('"') and file_path.endswith('"')) or \
@@ -100,16 +193,39 @@ async def fetch_cover_art():
         # Normalize and expand the path
         file_path = os.path.normpath(os.path.expanduser(file_path))
         
-        if not os.path.isfile(file_path):
+        # Check if path is a directory
+        if os.path.isdir(file_path):
+            # Scan directory for MP3 files
+            mp3_files = scan_directory_for_mp3(file_path)
+            
+            if not mp3_files:
+                console.print("[bold #f38ba8]❌ No MP3 files found in the directory![/bold #f38ba8]")
+                continue
+                
+            # Display list of found MP3 files
+            console.print("\n[#f9e2af]Found the following MP3 files:[/#f9e2af]")
+            for i, mp3_path in enumerate(mp3_files):
+                console.print(f"[#89b4fa]{i+1}.[/#89b4fa] {os.path.basename(mp3_path)}")
+                
+            # Let user select a file
+            file_choice = Prompt.ask(
+                "\n[#cba6f7]Select a file by number[/#cba6f7]",
+                choices=[str(i+1) for i in range(len(mp3_files))]
+            )
+                
+            file_path = mp3_files[int(file_choice) - 1]
+            console.print(f"[#94e2d5]Selected:[/#94e2d5] {file_path}")
+            break
+        elif os.path.isfile(file_path):
+            if not file_path.lower().endswith('.mp3'):
+                console.print("[bold #f38ba8]❌ Error: File must be an MP3 file![/bold #f38ba8]")
+                continue
+            break
+        else:
             console.print("[bold #f38ba8]❌ Error: File not found! Please enter a valid file path.[/bold #f38ba8]")
             console.print(f"[#89dceb]Attempted to find: {file_path}[/#89dceb]")
             console.print("[#89dceb]Tip: For files with spaces in the name, you can drag and drop the file here.[/#89dceb]")
             continue
-        
-        if not file_path.lower().endswith('.mp3'):
-            console.print("[bold #f38ba8]❌ Error: File must be an MP3 file![/bold #f38ba8]")
-            continue
-        break
     
     # Display the selected file with its full path for clarity
     console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")

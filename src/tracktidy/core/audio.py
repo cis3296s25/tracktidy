@@ -150,20 +150,84 @@ async def convert_audio_file(input_file, output_file, silent=False):
         return False
 
 
+def scan_directory_for_audio(directory_path):
+    """Scan a directory for audio files"""
+    # Common audio file extensions that FFmpeg can handle
+    supported_extensions = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma']
+    audio_files = []
+    
+    try:
+        for file in os.listdir(directory_path):
+            file_path = os.path.join(directory_path, file)
+            if os.path.isfile(file_path):
+                file_ext = os.path.splitext(file_path)[1].lower()
+                if file_ext in supported_extensions:
+                    audio_files.append(file_path)
+    except Exception as e:
+        console.print(f"[bold #f38ba8]❌ Error scanning directory:[/bold #f38ba8] {e}")
+    
+    return audio_files
+
 async def convert_audio():
     """Interactive audio conversion UI"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy Audio Converter 🎵[/bold #f5e0dc]\n")
-
+    
+    # Display options menu
+    console.print("[#89b4fa]1.[/#89b4fa][bold] Convert audio file[/bold]")
+    console.print("[#f38ba8]2.[/#f38ba8][bold] Return to Main Menu[/bold]")
+    
+    choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2"])
+    
+    if choice == "2":
+        return
+    
     # Get file path
     while True:
-        file_path = Prompt.ask("[#89dceb]Enter the path of the audio file to convert[/#89dceb]").strip()
-        if not file_path:
+        console.print("[#f38ba8]Type 'menu' at any prompt to return to the main menu[/#f38ba8]")
+        console.print("[#94e2d5]Supported input formats: MP3, WAV, FLAC, AAC, OGG, M4A, WMA and more[/#94e2d5]")
+        console.print("[#94e2d5]You can enter a file path or a folder path containing audio files[/#94e2d5]")
+        path = Prompt.ask("[#89dceb]Enter the path of the audio file or folder to convert[/#89dceb]").strip()
+        
+        if path.lower() == 'menu':
+            return
+            
+        if not path:
             console.print("[bold #f38ba8]❌ Error: Path cannot be empty! Try again.[/bold #f38ba8]")
             continue
-        if not os.path.isfile(file_path):
-            console.print("[bold #f38ba8]❌ Error: File not found! Try again.[/bold #f38ba8]")
+            
+        # Check if path is a directory
+        if os.path.isdir(path):
+            # Scan directory for audio files
+            audio_files = scan_directory_for_audio(path)
+            
+            if not audio_files:
+                console.print("[bold #f38ba8]❌ No audio files found in the directory![/bold #f38ba8]")
+                continue
+                
+            # Display list of found audio files
+            console.print("\n[#f9e2af]Found the following audio files:[/#f9e2af]")
+            for i, file_path in enumerate(audio_files):
+                console.print(f"[#89b4fa]{i+1}.[/#89b4fa] {os.path.basename(file_path)}")
+                
+            # Let user select a file
+            file_choice = Prompt.ask(
+                "\n[#cba6f7]Select a file by number (or type 'menu' to return)[/#cba6f7]",
+                choices=[str(i+1) for i in range(len(audio_files))] + ["menu"]
+            )
+            
+            if file_choice.lower() == 'menu':
+                return
+                
+            file_path = audio_files[int(file_choice) - 1]
+            console.print(f"[#94e2d5]Selected:[/#94e2d5] {file_path}")
+            break
+            
+        elif os.path.isfile(path):
+            file_path = path
+            break
+        else:
+            console.print("[bold #f38ba8]❌ Error: Path not found! Try again.[/bold #f38ba8]")
             continue
-        break
         
     # Display the selected file with its full path for clarity
     console.print(f"[bold #b4befe]Selected file:[/bold #b4befe] [#cba6f7]{os.path.abspath(file_path)}[/#cba6f7]")
@@ -171,7 +235,10 @@ async def convert_audio():
     # Choose the output format
     valid_formats = ["mp3", "wav", "flac", "aac", "ogg"]
     while True:
+        console.print("[#f38ba8]Type 'menu' at any prompt to return to the main menu[/#f38ba8]")
         output_format = Prompt.ask("[#cba6f7]Enter the output format (mp3, wav, flac, aac, ogg)[/#cba6f7]").strip().lower()
+        if output_format == 'menu':
+            return
         if output_format not in valid_formats:
             console.print("[bold #f38ba8]❌ Error:[/bold #f38ba8] Unsupported format!")
             continue

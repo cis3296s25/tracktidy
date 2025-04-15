@@ -67,8 +67,18 @@ def get_spotify_credentials():
     max_attempts = 3
     
     while attempts < max_attempts:
+        console.print("[#f38ba8]Enter -1 to return to the main menu[/#f38ba8]")
         client_id = Prompt.ask("[#cba6f7]Enter your Spotify Client ID[/#cba6f7]").strip()
+        
+        # Check if user wants to return to main menu
+        if client_id == "-1":
+            return "-1", "-1"  # Special return value to indicate return to main menu
+            
         client_secret = Prompt.ask("[#cba6f7]Enter your Spotify Client Secret[/#cba6f7]").strip()
+        
+        # Also check after second prompt
+        if client_secret == "-1":
+            return "-1", "-1"  # Special return value to indicate return to main menu
         
         console.print("[#89dceb]Validating credentials...[/#89dceb]")
         

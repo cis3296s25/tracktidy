@@ -91,24 +91,84 @@ async def edit_metadata_file(file_path, metadata_updates=None, silent=False):
             console.print(f"[bold #f38ba8]❌ Error:[/bold #f38ba8] {e}")
         return False
 
+def scan_directory_for_audio(directory_path):
+    """Scan a directory for supported audio files"""
+    supported_extensions = ['.mp3', '.flac', '.m4a', '.ogg']
+    audio_files = []
+    
+    try:
+        for file in os.listdir(directory_path):
+            file_path = os.path.join(directory_path, file)
+            if os.path.isfile(file_path):
+                file_ext = os.path.splitext(file_path)[1].lower()
+                if file_ext in supported_extensions:
+                    audio_files.append(file_path)
+    except Exception as e:
+        console.print(f"[bold #f38ba8]❌ Error scanning directory:[/bold #f38ba8] {e}")
+    
+    return audio_files
+
 async def edit_metadata():
     """Interactive metadata editing UI"""
     console.print("\n[bold #f5e0dc]🎵 TrackTidy - Metadata Editor 🎵[/bold #f5e0dc]")
-
+    
+    # Display options menu
+    console.print("\n[#89b4fa]1.[/#89b4fa][bold] Edit file metadata[/bold]")
+    console.print("[#f38ba8]2.[/#f38ba8][bold] Return to Main Menu[/bold]")
+    
+    choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2"])
+    
+    if choice == "2":
+        return
+    
     # Ask for the file path
     while True:
-        file_path = Prompt.ask("[#89dceb]Enter the path to the audio file[/#89dceb]").strip()
-        if not os.path.isfile(file_path):
-            console.print("[bold #f38ba8]❌ Error: File not found! Please enter a valid file path.[/bold #f38ba8]")
-            continue
+        console.print("[#f38ba8]Type 'menu' at any prompt to return to the main menu[/#f38ba8]")
+        console.print("[#94e2d5]Supported file formats: MP3, FLAC, M4A, OGG[/#94e2d5]")
+        console.print("[#94e2d5]You can enter a file path or a folder path containing audio files[/#94e2d5]")
+        path = Prompt.ask("[#89dceb]Enter the path to the audio file or folder[/#89dceb]").strip()
         
-        # Check if file has a supported extension
-        file_ext = os.path.splitext(file_path)[1].lower()
-        if file_ext not in ['.mp3', '.flac', '.m4a', '.ogg']:
-            console.print("[bold #f38ba8]❌ Error: Unsupported file format! Supported formats: MP3, FLAC, M4A, OGG[/bold #f38ba8]")
+        if path.lower() == 'menu':
+            return
+            
+        # Check if path is a directory
+        if os.path.isdir(path):
+            # Scan directory for audio files
+            audio_files = scan_directory_for_audio(path)
+            
+            if not audio_files:
+                console.print("[bold #f38ba8]❌ No supported audio files found in the directory![/bold #f38ba8]")
+                continue
+                
+            # Display list of found audio files
+            console.print("\n[#f9e2af]Found the following audio files:[/#f9e2af]")
+            for i, file_path in enumerate(audio_files):
+                console.print(f"[#89b4fa]{i+1}.[/#89b4fa] {os.path.basename(file_path)}")
+                
+            # Let user select a file
+            file_choice = Prompt.ask(
+                "\n[#cba6f7]Select a file by number (or type 'menu' to return)[/#cba6f7]",
+                choices=[str(i+1) for i in range(len(audio_files))] + ["menu"]
+            )
+            
+            if file_choice.lower() == 'menu':
+                return
+                
+            file_path = audio_files[int(file_choice) - 1]
+            console.print(f"[#94e2d5]Selected:[/#94e2d5] {file_path}")
+            break
+            
+        elif os.path.isfile(path):
+            file_path = path
+            # Check if file has a supported extension
+            file_ext = os.path.splitext(file_path)[1].lower()
+            if file_ext not in ['.mp3', '.flac', '.m4a', '.ogg']:
+                console.print("[bold #f38ba8]❌ Error: Unsupported file format! Supported formats: MP3, FLAC, M4A, OGG[/bold #f38ba8]")
+                continue
+            break
+        else:
+            console.print("[bold #f38ba8]❌ Error: Path not found! Please enter a valid file or folder path.[/bold #f38ba8]")
             continue
-        
-        break
 
     # Load the audio file and define metadata fields
     metadata_fields = ["title", "artist", "album", "genre"]
@@ -181,9 +241,12 @@ async def edit_metadata():
         console.print("\n[#cba6f7]Enter new metadata values (press Enter to keep current value):[/#cba6f7]")
 
         # Prompt user for new metadata input
+        console.print("[#f38ba8]Type 'menu' at any prompt to return to the main menu[/#f38ba8]")
         metadata_updates = {}
         for field in metadata_fields:
             new_value = Prompt.ask(f"[#89b4fa]{field.capitalize()}[/#89b4fa]", default=current_metadata[field]).strip()
+            if new_value.lower() == 'menu':
+                return
             if new_value and new_value != current_metadata[field]:
                 metadata_updates[field] = new_value
         
