@@ -11,7 +11,8 @@ from tracktidy.services.spotify import (
     get_spotify_credentials, 
     initialize_spotify_client,
     search_track,
-    download_cover_art
+    download_cover_art,
+    reset_spotify_credentials
 )
 
 console = Console()
@@ -91,7 +92,10 @@ async def fetch_cover_art():
             # Reset Spotify credentials
             console.print("[#89dceb]Resetting Spotify API credentials...[/#89dceb]")
             
-            # Clear existing credentials
+            # Delete the credentials file
+            reset_result = reset_spotify_credentials()
+            
+            # Clear existing credentials in memory
             sp = None
             SPOTIPY_CLIENT_ID = ""
             SPOTIPY_CLIENT_SECRET = ""

@@ -156,3 +156,20 @@ def download_cover_art(cover_url):
     except requests.RequestException as e:
         console.print(f"[bold #f38ba8]❌ Failed to download cover art:[/bold #f38ba8] {e}")
         return None
+
+def reset_spotify_credentials():
+    """Delete or reset the Spotify credentials file"""
+    creds_file = get_creds_file_path()
+    
+    if os.path.exists(creds_file):
+        try:
+            # Option 1: Delete the file
+            os.remove(creds_file)
+            console.print("[bold #a6e3a1]✅ Spotify credentials have been reset![/bold #a6e3a1]")
+            return True
+        except Exception as e:
+            console.print(f"[bold #f38ba8]❌ Failed to reset Spotify credentials:[/bold #f38ba8] {e}")
+            return False
+    else:
+        console.print("[#89dceb]No stored Spotify credentials found.[/#89dceb]")
+        return True  # Return True since there's nothing to reset
