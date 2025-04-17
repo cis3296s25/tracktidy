@@ -67,8 +67,18 @@ def get_spotify_credentials():
     max_attempts = 3
     
     while attempts < max_attempts:
+        console.print("[#f38ba8]Enter -1 to return to the main menu[/#f38ba8]")
         client_id = Prompt.ask("[#cba6f7]Enter your Spotify Client ID[/#cba6f7]").strip()
+        
+        # Check if user wants to return to main menu
+        if client_id == "-1":
+            return "-1", "-1"  # Special return value to indicate return to main menu
+            
         client_secret = Prompt.ask("[#cba6f7]Enter your Spotify Client Secret[/#cba6f7]").strip()
+        
+        # Also check after second prompt
+        if client_secret == "-1":
+            return "-1", "-1"  # Special return value to indicate return to main menu
         
         console.print("[#89dceb]Validating credentials...[/#89dceb]")
         
@@ -146,3 +156,20 @@ def download_cover_art(cover_url):
     except requests.RequestException as e:
         console.print(f"[bold #f38ba8]❌ Failed to download cover art:[/bold #f38ba8] {e}")
         return None
+
+def reset_spotify_credentials():
+    """Delete or reset the Spotify credentials file"""
+    creds_file = get_creds_file_path()
+    
+    if os.path.exists(creds_file):
+        try:
+            # Option 1: Delete the file
+            os.remove(creds_file)
+            console.print("[bold #a6e3a1]✅ Spotify credentials have been reset![/bold #a6e3a1]")
+            return True
+        except Exception as e:
+            console.print(f"[bold #f38ba8]❌ Failed to reset Spotify credentials:[/bold #f38ba8] {e}")
+            return False
+    else:
+        console.print("[#89dceb]No stored Spotify credentials found.[/#89dceb]")
+        return True  # Return True since there's nothing to reset
