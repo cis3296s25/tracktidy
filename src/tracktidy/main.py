@@ -21,6 +21,7 @@ from src.tracktidy.batch.processor import batch_process
 
 # Import UI modules
 from src.tracktidy.ui.playlist_ui import playlist_ui
+from src.tracktidy.ui.organizer_ui import organizer_ui
 
 console = Console(force_terminal=True, color_system="truecolor")
 
@@ -66,9 +67,10 @@ async def main_menu():
         console.print("[#fab387]4.[/#fab387][bold]Batch Processing[/bold]")
         console.print("[#94e2d5]5.[/#94e2d5][bold]Music Downloader[/bold]")
         console.print("[#b9befe]6.[/#b9befe][bold]Generate Playlist[/bold]")
-        console.print("[#f38ba8]7.[/#f38ba8][bold]Exit[/bold]")
+        console.print("[#a6e3a1]7.[/#a6e3a1][bold]Organize Audio Files[/bold]")
+        console.print("[#f38ba8]8.[/#f38ba8][bold]Exit[/bold]")
 
-        choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3", "4", "5", "6", "7"])
+        choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2", "3", "4", "5", "6", "7", "8"])
 
         if choice == "1":
             await edit_metadata()
@@ -86,6 +88,9 @@ async def main_menu():
             # Playlist generator option
             await playlist_ui()
         elif choice == "7":
+            # Audio file organizer option
+            await organizer_ui()
+        elif choice == "8":
             console.print("[#a6e3a1]❌ Exiting TrackTidy. Goodbye![/#a6e3a1]")
             break
 
