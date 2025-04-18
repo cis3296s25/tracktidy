@@ -16,32 +16,14 @@ async def playlist_ui():
     """
     User interface for generating playlists
     """
-    while True:
-        console.clear()
-        
-        # Display header
-        header = Text("🎵 Playlist Generator 🎵", style="bold #f5c2e7")
-        console.print(Panel(header, style="bold #cba6f7"))
-        
-        console.print("\n[bold #89b4fa]This tool helps you create playlist files from your music collection.[/bold #89b4fa]")
-        console.print("[#89dceb]You can create .m3u or .pls playlist files from selected tracks.[/#89dceb]\n")
-        
-        # Display playlist options
-        console.print("[#89b4fa]1.[/#89b4fa][bold] Generate Playlist from Local Files[/bold]")
-        console.print("[#f38ba8]2.[/#f38ba8][bold] Return to Main Menu[/bold]")
-        
-        choice = Prompt.ask("\n[#cba6f7]Select an option[/#cba6f7]", choices=["1", "2"])
-        
-        if choice == "2":
-            return
-        
-        # If we get here, the user selected option 1 (Generate Playlist from Local Files)
-        await generate_local_playlist()
-
-async def generate_local_playlist():
-    """
-    Generate a playlist from local files
-    """
+    console.clear()
+    
+    # Display header
+    header = Text("🎵 Playlist Generator 🎵", style="bold #f5c2e7")
+    console.print(Panel(header, style="bold #cba6f7"))
+    
+    console.print("\n[bold #89b4fa]This tool helps you create playlist files from your music collection.[/bold #89b4fa]")
+    console.print("[#89dceb]You can create .m3u or .pls playlist files from selected tracks.[/#89dceb]\n")
     
     # Get directory containing audio files
     default_dir = os.path.expanduser("~/Music")
