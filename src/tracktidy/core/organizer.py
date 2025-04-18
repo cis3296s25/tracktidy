@@ -13,29 +13,42 @@ console = Console()
 # Common audio file extensions
 AUDIO_EXTENSIONS = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma']
 
-def scan_directory_for_audio_files(directory: str) -> List[str]:
+# Playlist file extensions
+PLAYLIST_EXTENSIONS = ['.m3u', '.pls']
+
+# All supported file extensions
+SUPPORTED_EXTENSIONS = AUDIO_EXTENSIONS + PLAYLIST_EXTENSIONS
+
+def scan_directory_for_files(directory: str) -> Dict[str, List[str]]:
     """
-    Scan a directory for audio files
+    Scan a directory for audio and playlist files
     
     Args:
-        directory: Directory to scan for audio files
+        directory: Directory to scan for files
         
     Returns:
-        List of audio file paths
+        Dictionary with 'audio' and 'playlist' keys mapping to lists of file paths
     """
     audio_files = []
+    playlist_files = []
     
     try:
         for root, _, files in os.walk(directory):
             for file in files:
                 file_path = os.path.join(root, file)
                 file_ext = os.path.splitext(file_path)[1].lower()
+                
                 if file_ext in AUDIO_EXTENSIONS:
                     audio_files.append(file_path)
+                elif file_ext in PLAYLIST_EXTENSIONS:
+                    playlist_files.append(file_path)
     except Exception as e:
         console.print(f"[bold #f38ba8]Error scanning directory: {e}[/bold #f38ba8]")
     
-    return audio_files
+    return {
+        'audio': audio_files,
+        'playlist': playlist_files
+    }
 
 def group_files_by_format(files: List[str]) -> Dict[str, List[str]]:
     """
@@ -141,12 +154,12 @@ def move_files_to_format_folders(grouped_files: Dict[str, List[str]], format_fol
     
     return moved_files, total_files, errors
 
-async def organize_audio_files_by_format(directory: str) -> Tuple[bool, Dict[str, int], List[str]]:
+async def organize_files_by_format(directory: str) -> Tuple[bool, Dict[str, any], List[str]]:
     """
-    Organize audio files in a directory by their format
+    Organize audio and playlist files in a directory by their format
     
     Args:
-        directory: Directory containing audio files to organize
+        directory: Directory containing files to organize
         
     Returns:
         Tuple containing (success status, stats dictionary, list of errors)
@@ -155,28 +168,66 @@ async def organize_audio_files_by_format(directory: str) -> Tuple[bool, Dict[str
     if not os.path.isdir(directory):
         return False, {}, [f"Invalid directory: {directory}"]
     
-    # Scan directory for audio files
-    console.print(f"[bold #89b4fa]Scanning {directory} for audio files...[/bold #89b4fa]")
-    audio_files = scan_directory_for_audio_files(directory)
+    # Scan directory for audio and playlist files
+    console.print(f"[bold #89b4fa]Scanning {directory} for audio and playlist files...[/bold #89b4fa]")
+    files_dict = scan_directory_for_files(directory)
     
-    if not audio_files:
-        return False, {}, ["No audio files found in the directory"]
+    audio_files = files_dict['audio']
+    playlist_files = files_dict['playlist']
     
-    # Group files by format
-    grouped_files = group_files_by_format(audio_files)
+    if not audio_files and not playlist_files:
+        return False, {}, ["No audio or playlist files found in the directory"]
     
-    # Create format folders
-    format_folders = create_format_folders(directory, list(grouped_files.keys()))
+    total_moved_files = 0
+    total_files = 0
+    all_errors = []
+    format_stats = {}
     
-    # Move files to format folders
-    console.print("[bold #89b4fa]Moving files to format folders...[/bold #89b4fa]")
-    moved_files, total_files, errors = move_files_to_format_folders(grouped_files, format_folders)
+    # Process audio files
+    if audio_files:
+        # Group files by format
+        grouped_audio_files = group_files_by_format(audio_files)
+        
+        # Create format folders
+        format_folders = create_format_folders(directory, list(grouped_audio_files.keys()))
+        
+        # Move files to format folders
+        console.print("[bold #89b4fa]Moving audio files to format folders...[/bold #89b4fa]")
+        moved_files, total_audio_files, errors = move_files_to_format_folders(grouped_audio_files, format_folders)
+        
+        total_moved_files += moved_files
+        total_files += total_audio_files
+        all_errors.extend(errors)
+        
+        # Add audio format stats
+        for format_name, files in grouped_audio_files.items():
+            format_stats[format_name] = len(files)
+    
+    # Process playlist files
+    if playlist_files:
+        # Group files by format
+        grouped_playlist_files = group_files_by_format(playlist_files)
+        
+        # Create format folders
+        format_folders = create_format_folders(directory, list(grouped_playlist_files.keys()))
+        
+        # Move files to format folders
+        console.print("[bold #89b4fa]Moving playlist files to format folders...[/bold #89b4fa]")
+        moved_files, total_playlist_files, errors = move_files_to_format_folders(grouped_playlist_files, format_folders)
+        
+        total_moved_files += moved_files
+        total_files += total_playlist_files
+        all_errors.extend(errors)
+        
+        # Add playlist format stats
+        for format_name, files in grouped_playlist_files.items():
+            format_stats[format_name] = len(files)
     
     # Prepare stats
     stats = {
         "total_files": total_files,
-        "moved_files": moved_files,
-        "formats": {format_name: len(files) for format_name, files in grouped_files.items()}
+        "moved_files": total_moved_files,
+        "formats": format_stats
     }
     
-    return moved_files > 0, stats, errors
+    return total_moved_files > 0, stats, all_errors
