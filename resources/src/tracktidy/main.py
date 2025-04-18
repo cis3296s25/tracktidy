@@ -88,7 +88,7 @@ async def main_menu():
             # Playlist generator option
             await playlist_ui()
         elif choice == "7":
-            # Audio file organizer option
+            # File organizer option
             await organizer_ui()
         elif choice == "8":
             console.print("[#a6e3a1]❌ Exiting TrackTidy. Goodbye![/#a6e3a1]")
