@@ -5,6 +5,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from src.tracktidy.batch.processor import batch_process, get_files_for_batch
 from src.tracktidy.core.cover_art import get_spotify_credentials, search_track, download_cover_art
+from src.tracktidy.services.spotify import validate_spotify_credentials
 
 # Mocking the Console to avoid actual prints during tests
 @pytest.fixture
@@ -51,11 +52,13 @@ async def test_get_files_for_batch_valid_directory(mock_prompt, mock_console):
 
 @pytest.mark.asyncio
 async def test_get_files_for_batch_invalid_directory(mock_prompt, mock_console):
-    # Simulating an invalid directory
-    mock_prompt.return_value = "/invalid/directory"
+    print("Starting invalid dir test")
+    mock_prompt.return_value = "/invalid/directory"  # Mock invalid directory input
+    mock_confirm.return_value = False  # Mock 'No' for retrying
     
-    with patch('os.path.isdir', return_value=False):
+    with patch('os.path.isdir', return_value=False):  # Simulating invalid directory
         files = await get_files_for_batch(file_type="audio")
+        print("Finished invalid dir test")  # This should print if test continues
         assert files == []  # No files found due to invalid directory
 
 # ---- TESTING cover_art.py ----
